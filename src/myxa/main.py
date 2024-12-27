@@ -1,6 +1,5 @@
 import builtins
 import logging
-import sys
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Optional
@@ -121,7 +120,6 @@ class Printer:
 
     def print_error(self, msg: str) -> None:
         self.console.print(f"[bold red]{msg}")
-        sys.exit()
 
     def print_message(self, msg: str) -> None:
         self.console.print(f"[reset][bold]{msg}")
@@ -402,7 +400,7 @@ def main(manager: Manager, printer: Printer) -> None:
     manager.lock(euler_package)
     manager.publish(euler_package, primary_index)
 
-    manager.lock(flatty_package)
+    # manager.lock(flatty_package)
     manager.publish(flatty_package, primary_index)
 
     manager.add(interlet_package, flatty_package.info.name, indexes)

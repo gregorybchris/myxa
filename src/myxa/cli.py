@@ -48,3 +48,5 @@ def run(
         main(manager, printer)
     except UserError as exc:
         printer.print_error(str(exc))
+        if debug:
+            raise exc
