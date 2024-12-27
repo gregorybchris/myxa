@@ -49,7 +49,7 @@ class Func(Node):
 @dataclass(kw_only=True)
 class ImportPath:
     module_names: list[str]
-    member_name: str
+    member_names: list[str]
 
 
 @dataclass(kw_only=True)
@@ -91,7 +91,7 @@ class PackageInfo:
 class Package:
     info: PackageInfo
     lock: Optional[PackageLock] = None
-    modules: dict[str, Mod]
+    members: dict[str, Node]
 
 
 @dataclass(kw_only=True)
@@ -177,27 +177,27 @@ class Manager:
     def update(self, package: Package) -> None:
         raise NotImplementedError
 
-    def _add_mod_tree(self, mod: Mod, tree: Tree) -> None:
-        mod_tree = tree.add(mod.name, style="purple")
+    def _add_tree_node(self, node: Node, tree: Tree) -> None:
         type_builtin = builtins.type
-        for member in mod.members.values():
-            match member:
-                case Const(name=name, type=type):
-                    mod_tree.add(f"[steel_blue1]{name}[black]: [sandy_brown]{type}")
-                case Func(name=name, params=params, return_type=return_type):
-                    func_str = f"[steel_blue1]{name}[black]("
-                    for param_name, param in params.items():
-                        func_str += f"[red]{param_name}[black]: [light_goldenrod2]{param.type}, "
-                    if len(params) > 0:
-                        func_str = func_str[:-2]
-                    func_str += "[black])"
-                    func_str += f"[black] -> [sandy_brown]{return_type}"
-                    mod_tree.add(func_str)
-                case Mod(name=name):
-                    self._add_mod_tree(member, mod_tree)
-                case _:
-                    msg = f"Node type not handled: {type_builtin(member)}"
-                    raise InternalError(msg)
+        match node:
+            case Const(name=name, type=type):
+                tree.add(f"[steel_blue1]{name}[black]: [sandy_brown]{type}")
+            case Func(name=name, params=params, return_type=return_type):
+                func_str = f"[steel_blue1]{name}[black]("
+                for param_name, param in params.items():
+                    func_str += f"[red]{param_name}[black]: [light_goldenrod2]{param.type}, "
+                if len(params) > 0:
+                    func_str = func_str[:-2]
+                func_str += "[black])"
+                func_str += f"[black] -> [sandy_brown]{return_type}"
+                tree.add(func_str)
+            case Mod(name=name, members=members):
+                mod_tree = tree.add(name, style="purple")
+                for member in members.values():
+                    self._add_tree_node(member, mod_tree)
+            case _:
+                msg = f"Node type not handled: {type_builtin(node)}"
+                raise InternalError(msg)
 
     def print_package_info(self, package: Package, lock: bool = False, modules: bool = False) -> None:
         info = package.info
@@ -231,9 +231,9 @@ class Manager:
             group_renderables = (*group_renderables, padding, lock_tree)
 
         if modules:
-            modules_tree = Tree("Modules", style="steel_blue3")
-            for mod in package.modules.values():
-                self._add_mod_tree(mod, modules_tree)
+            modules_tree = Tree("Interface", style="steel_blue3")
+            for node in package.members.values():
+                self._add_tree_node(node, modules_tree)
             group_renderables = (*group_renderables, padding, modules_tree)
 
         group = Group(*group_renderables)
@@ -316,7 +316,35 @@ def main(manager: Manager) -> None:
                 description="A compilation of useful math stuff",
                 version=Version(major=0, minor=1),
             ),
-            modules={"math": math_module},
+            members={"math": math_module},
+        )
+
+        serialize_function = Func(
+            name="serialize",
+            params={
+                "data": Param(name="s", type=Type.Str),
+            },
+            return_type=Type.Str,
+        )
+
+        deserialize_function = Func(
+            name="deserialize",
+            params={
+                "data": Param(name="s", type=Type.Str),
+            },
+            return_type=Type.Str,
+        )
+
+        flatty_package = Package(
+            info=PackageInfo(
+                name="flatty",
+                description="A package for serializing and deserializing data",
+                version=Version(major=2, minor=0),
+            ),
+            members={
+                "serialize": serialize_function,
+                "deserialize": deserialize_function,
+            },
         )
 
         serve_function = Func(
@@ -330,7 +358,7 @@ def main(manager: Manager) -> None:
 
         router_module = Mod(
             name="router",
-            imports=[],
+            imports=[ImportPath(module_names=["flatty"], member_names=["serialize", "deserialize"])],
             members={"serve": serve_function},
         )
 
@@ -340,7 +368,7 @@ def main(manager: Manager) -> None:
                 description="A blazingly fast webserver",
                 version=Version(major=3, minor=4),
             ),
-            modules={"router": router_module},
+            members={"router": router_module},
         )
 
         run_function = Func(
@@ -352,8 +380,8 @@ def main(manager: Manager) -> None:
         main_module = Mod(
             name="main",
             imports=[
-                ImportPath(module_names=["euler", "math"], member_name="add"),
-                ImportPath(module_names=["interlet", "router"], member_name="serve"),
+                ImportPath(module_names=["euler", "math"], member_names=["add"]),
+                ImportPath(module_names=["interlet", "router"], member_names=["serve"]),
             ],
             members={"run": run_function},
         )
@@ -364,7 +392,7 @@ def main(manager: Manager) -> None:
                 description="A fun app for doing math",
                 version=Version(major=1, minor=2),
             ),
-            modules={"main": main_module},
+            members={"main": main_module},
         )
 
         primary_index = Index(name="primary")
@@ -374,6 +402,10 @@ def main(manager: Manager) -> None:
         manager.lock(euler_package)
         manager.publish(euler_package, primary_index)
 
+        manager.lock(flatty_package)
+        manager.publish(flatty_package, primary_index)
+
+        manager.add(interlet_package, "flatty", indexes)
         manager.lock(interlet_package)
         manager.publish(interlet_package, primary_index)
 
@@ -382,6 +414,7 @@ def main(manager: Manager) -> None:
         manager.lock(app_package)
 
         manager.print_package_info(euler_package, lock=True, modules=True)
+        manager.print_package_info(flatty_package, lock=True, modules=True)
         manager.print_package_info(interlet_package, lock=True, modules=True)
         manager.print_package_info(app_package, lock=True, modules=True)
     except UserError as exc:
