@@ -267,7 +267,16 @@ class Manager:
 
     def save_package(self, package: Package, package_filepath: Path) -> None:
         with package_filepath.open("w") as fp:
-            json.dump(package.model_dump(), fp, indent=2)
+            fp.write(package.model_dump_json(indent=2))
+
+    def load_index(self, index_filepath: Path) -> Index:
+        with index_filepath.open("r") as fp:
+            index_dict = json.load(fp)
+        return Index(**index_dict)
+
+    def save_index(self, index: Index, index_filepath: Path) -> None:
+        with index_filepath.open("w") as fp:
+            fp.write(index.model_dump_json(indent=2))
 
 
 def main(manager: Manager, printer: Printer) -> None:
@@ -276,15 +285,19 @@ def main(manager: Manager, printer: Printer) -> None:
     flatty_package_filepath = examples_dirpath / "flatty.json"
     interlet_package_filepath = examples_dirpath / "interlet.json"
     app_package_filepath = examples_dirpath / "app.json"
+    primary_index_filepath = examples_dirpath / "primary_index.json"
+    secondary_index_filepath = examples_dirpath / "secondary_index.json"
 
     euler_package = manager.load_package(euler_package_filepath)
     flatty_package = manager.load_package(flatty_package_filepath)
     interlet_package = manager.load_package(interlet_package_filepath)
     app_package = manager.load_package(app_package_filepath)
 
+    # primary_index = manager.load_index(primary_index_filepath)
+    # secondary_index = manager.load_index(secondary_index_filepath)
     primary_index = Index(name="primary")
     secondary_index = Index(name="secondary")
-    indexes = [primary_index, secondary_index]
+    # indexes = [primary_index, secondary_index]
 
     manager.lock(euler_package)
     manager.publish(euler_package, primary_index)
@@ -309,3 +322,6 @@ def main(manager: Manager, printer: Printer) -> None:
     manager.save_package(flatty_package, flatty_package_filepath)
     manager.save_package(interlet_package, interlet_package_filepath)
     manager.save_package(app_package, app_package_filepath)
+
+    manager.save_index(primary_index, primary_index_filepath)
+    manager.save_index(secondary_index, secondary_index_filepath)
