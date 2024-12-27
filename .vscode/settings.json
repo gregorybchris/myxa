@@ -15,5 +15,5 @@
   "prettier.printWidth": 120,
   "ruff.configuration": "pyproject.toml",
   "ruff.nativeServer": true,
-  "cSpell.words": ["defn", "myxa", "renderable", "renderables", "rprint", "typer"]
+  "cSpell.words": ["defn", "interlet", "myxa", "renderable", "renderables", "rprint", "typer"]
 }

@@ -310,11 +310,11 @@ def main(manager: Manager) -> None:
         members={"serve": serve_function},
     )
 
-    webserver_package = Package(
+    interlet_package = Package(
         info=PackageInfo(
-            name="webserver",
-            description="A simple webserver",
-            version=Version(major=1, minor=0),
+            name="interlet",
+            description="A blazingly fast webserver",
+            version=Version(major=3, minor=4),
         ),
         modules={"router": router_module},
     )
@@ -329,7 +329,7 @@ def main(manager: Manager) -> None:
         name="main",
         imports=[
             ImportPath(module_names=["euler", "math"], member_name="add"),
-            ImportPath(module_names=["webserver", "router"], member_name="serve"),
+            ImportPath(module_names=["interlet", "router"], member_name="serve"),
         ],
         members={"run": run_function},
     )
@@ -350,13 +350,13 @@ def main(manager: Manager) -> None:
     manager.lock(euler_package)
     manager.publish(euler_package, primary_index)
 
-    manager.lock(webserver_package)
-    manager.publish(webserver_package, primary_index)
+    manager.lock(interlet_package)
+    manager.publish(interlet_package, primary_index)
 
     manager.add(app_package, "euler", indexes)
-    manager.add(app_package, "webserver", indexes)
+    manager.add(app_package, "interlet", indexes)
     manager.lock(app_package)
 
     manager.print_package_info(euler_package, lock=True, modules=True)
-    manager.print_package_info(webserver_package, lock=True, modules=True)
+    manager.print_package_info(interlet_package, lock=True, modules=True)
     manager.print_package_info(app_package, lock=True, modules=True)
