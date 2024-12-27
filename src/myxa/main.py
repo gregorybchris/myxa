@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class Type(StrEnum):
-    Str = "Str"
-    Int = "Int"
-    Float = "Float"
     Bool = "Bool"
+    Float = "Float"
+    Int = "Int"
     Null = "Null"
+    Str = "Str"
 
 
 @dataclass(kw_only=True)
