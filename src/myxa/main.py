@@ -1,3 +1,4 @@
+import builtins
 import logging
 import sys
 from dataclasses import dataclass, field
@@ -27,7 +28,7 @@ class Node:
 
 
 @dataclass(kw_only=True)
-class Const:
+class Const(Node):
     name: str
     type: Type
 
@@ -178,10 +179,11 @@ class Manager:
 
     def _add_mod_tree(self, mod: Mod, tree: Tree) -> None:
         mod_tree = tree.add(mod.name, style="purple")
+        type_builtin = builtins.type
         for member in mod.members.values():
             match member:
-                case Mod(name=name):
-                    self._add_mod_tree(member, mod_tree)
+                case Const(name=name, type=type):
+                    mod_tree.add(f"[steel_blue1]{name}[black]: [sandy_brown]{type}")
                 case Func(name=name, params=params, return_type=return_type):
                     func_str = f"[steel_blue1]{name}[black]("
                     for param_name, param in params.items():
@@ -191,8 +193,10 @@ class Manager:
                     func_str += "[black])"
                     func_str += f"[black] -> [sandy_brown]{return_type}"
                     mod_tree.add(func_str)
+                case Mod(name=name):
+                    self._add_mod_tree(member, mod_tree)
                 case _:
-                    msg = f"Node type not handled: {type(member)}"
+                    msg = f"Node type not handled: {type_builtin(member)}"
                     raise InternalError(msg)
 
     def print_package_info(self, package: Package, lock: bool = False, modules: bool = False) -> None:
@@ -281,6 +285,9 @@ def main(manager: Manager) -> None:
             return_type=Type.Float,
         )
 
+        pi_const = Const(name="pi", type=Type.Float)
+        e_const = Const(name="e", type=Type.Float)
+
         trig_module = Mod(
             name="trig",
             imports=[],
@@ -295,6 +302,8 @@ def main(manager: Manager) -> None:
             name="math",
             imports=[],
             members={
+                "pi": pi_const,
+                "e": e_const,
                 "add": add_function,
                 "sub": sub_function,
                 "trig": trig_module,
@@ -304,7 +313,7 @@ def main(manager: Manager) -> None:
         euler_package = Package(
             info=PackageInfo(
                 name="euler",
-                description="A compilation of important math functions",
+                description="A compilation of useful math stuff",
                 version=Version(major=0, minor=1),
             ),
             modules={"math": math_module},
