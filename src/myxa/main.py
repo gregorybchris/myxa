@@ -1,4 +1,5 @@
 import logging
+import sys
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Optional
@@ -104,14 +105,26 @@ class Index:
     namespaces: dict[str, Namespace] = field(default_factory=dict)
 
 
+class InternalError(Exception):
+    pass
+
+
+class UserError(Exception):
+    pass
+
+
 @dataclass(kw_only=True)
 class Manager:
     console: Console
 
+    def error(self, msg: str) -> None:
+        self.console.print(f"[bold red]{msg}")
+        sys.exit()
+
     def publish(self, package: Package, index: Index) -> None:
         if package.lock is None:
             msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
-            raise ValueError(msg)
+            raise UserError(msg)
 
         # TODO: Check package name is valid with regex
         # TODO: Check that the version is incremented only by one (minor or major)
@@ -121,7 +134,7 @@ class Manager:
             # TODO: Check that if this package correctly increments major version if changes are breaking
             if info.version in namespace.packages:
                 msg = f"Package {info.name} version {info.version} already exists in index {index.name}"
-                raise ValueError(msg)
+                raise UserError(msg)
             namespace.packages[info.version] = package
         else:
             namespace = Namespace(name=info.name)
@@ -132,8 +145,8 @@ class Manager:
         for index in indexes:
             if namespace := index.namespaces.get(name):
                 return namespace
-        msg = f"Package {name} not found in any provided indexes"
-        raise ValueError(msg)
+        msg = f"Package {name} not found in any provided indexes: {[index.name for index in indexes]}"
+        raise UserError(msg)
 
     def _get_latest_package(self, namespace: Namespace) -> Package:
         versions = list(namespace.packages.keys())
@@ -141,9 +154,10 @@ class Manager:
         return namespace.packages[latest_version]
 
     def add(self, package: Package, dep_name: str, indexes: list[Index]) -> None:
+        self.console.print(f"Adding [steel_blue1]{dep_name}[reset] to [steel_blue1]{package.info.name}[reset]...")
         if package.info.deps.get(dep_name):
             msg = f"{dep_name} is already a dependency of {package.info.name}"
-            raise ValueError(msg)
+            raise UserError(msg)
 
         # TODO: Resolve the latest compatible version of the dep
         namespace = self._find_namespace(dep_name, indexes)
@@ -178,8 +192,8 @@ class Manager:
                     func_str += f"[black] -> [sandy_brown]{return_type}"
                     mod_tree.add(func_str)
                 case _:
-                    msg = f"Unexpected member type {type(member)}"
-                    raise ValueError(msg)
+                    msg = f"Node type not handled: {type(member)}"
+                    raise InternalError(msg)
 
     def print_package_info(self, package: Package, lock: bool = False, modules: bool = False) -> None:
         info = package.info
@@ -203,7 +217,7 @@ class Manager:
         if lock:
             if package.lock is None:
                 msg = f"No lock found for package {package.info.name}"
-                raise ValueError(msg)
+                raise UserError(msg)
 
             lock_tree = Tree("Locked dependencies", style="steel_blue3")
             for dep in package.lock.deps.values():
@@ -224,139 +238,142 @@ class Manager:
 
 
 def main(manager: Manager) -> None:
-    add_function = Func(
-        name="add",
-        params={
-            "a": Param(name="a", type=Type.Int),
-            "b": Param(name="b", type=Type.Int),
-        },
-        return_type=Type.Int,
-    )
+    try:
+        add_function = Func(
+            name="add",
+            params={
+                "a": Param(name="a", type=Type.Int),
+                "b": Param(name="b", type=Type.Int),
+            },
+            return_type=Type.Int,
+        )
 
-    sub_function = Func(
-        name="sub",
-        params={
-            "a": Param(name="a", type=Type.Int),
-            "b": Param(name="b", type=Type.Int),
-        },
-        return_type=Type.Int,
-    )
+        sub_function = Func(
+            name="sub",
+            params={
+                "a": Param(name="a", type=Type.Int),
+                "b": Param(name="b", type=Type.Int),
+            },
+            return_type=Type.Int,
+        )
 
-    sin_function = Func(
-        name="sin",
-        params={
-            "x": Param(name="x", type=Type.Float),
-        },
-        return_type=Type.Float,
-    )
+        sin_function = Func(
+            name="sin",
+            params={
+                "x": Param(name="x", type=Type.Float),
+            },
+            return_type=Type.Float,
+        )
 
-    cos_function = Func(
-        name="cos",
-        params={
-            "x": Param(name="x", type=Type.Float),
-        },
-        return_type=Type.Float,
-    )
+        cos_function = Func(
+            name="cos",
+            params={
+                "x": Param(name="x", type=Type.Float),
+            },
+            return_type=Type.Float,
+        )
 
-    tan_function = Func(
-        name="tan",
-        params={
-            "x": Param(name="x", type=Type.Float),
-        },
-        return_type=Type.Float,
-    )
+        tan_function = Func(
+            name="tan",
+            params={
+                "x": Param(name="x", type=Type.Float),
+            },
+            return_type=Type.Float,
+        )
 
-    trig_module = Mod(
-        name="trig",
-        imports=[],
-        members={
-            "sin": sin_function,
-            "cos": cos_function,
-            "tan": tan_function,
-        },
-    )
+        trig_module = Mod(
+            name="trig",
+            imports=[],
+            members={
+                "sin": sin_function,
+                "cos": cos_function,
+                "tan": tan_function,
+            },
+        )
 
-    math_module = Mod(
-        name="math",
-        imports=[],
-        members={
-            "add": add_function,
-            "sub": sub_function,
-            "trig": trig_module,
-        },
-    )
+        math_module = Mod(
+            name="math",
+            imports=[],
+            members={
+                "add": add_function,
+                "sub": sub_function,
+                "trig": trig_module,
+            },
+        )
 
-    euler_package = Package(
-        info=PackageInfo(
-            name="euler",
-            description="A compilation of important math functions",
-            version=Version(major=0, minor=1),
-        ),
-        modules={"math": math_module},
-    )
+        euler_package = Package(
+            info=PackageInfo(
+                name="euler",
+                description="A compilation of important math functions",
+                version=Version(major=0, minor=1),
+            ),
+            modules={"math": math_module},
+        )
 
-    serve_function = Func(
-        name="serve",
-        params={
-            "host": Param(name="host", type=Type.Str),
-            "port": Param(name="port", type=Type.Int),
-        },
-        return_type=Type.Null,
-    )
+        serve_function = Func(
+            name="serve",
+            params={
+                "host": Param(name="host", type=Type.Str),
+                "port": Param(name="port", type=Type.Int),
+            },
+            return_type=Type.Null,
+        )
 
-    router_module = Mod(
-        name="router",
-        imports=[],
-        members={"serve": serve_function},
-    )
+        router_module = Mod(
+            name="router",
+            imports=[],
+            members={"serve": serve_function},
+        )
 
-    interlet_package = Package(
-        info=PackageInfo(
-            name="interlet",
-            description="A blazingly fast webserver",
-            version=Version(major=3, minor=4),
-        ),
-        modules={"router": router_module},
-    )
+        interlet_package = Package(
+            info=PackageInfo(
+                name="interlet",
+                description="A blazingly fast webserver",
+                version=Version(major=3, minor=4),
+            ),
+            modules={"router": router_module},
+        )
 
-    run_function = Func(
-        name="run",
-        params={},
-        return_type=Type.Null,
-    )
+        run_function = Func(
+            name="run",
+            params={},
+            return_type=Type.Null,
+        )
 
-    main_module = Mod(
-        name="main",
-        imports=[
-            ImportPath(module_names=["euler", "math"], member_name="add"),
-            ImportPath(module_names=["interlet", "router"], member_name="serve"),
-        ],
-        members={"run": run_function},
-    )
+        main_module = Mod(
+            name="main",
+            imports=[
+                ImportPath(module_names=["euler", "math"], member_name="add"),
+                ImportPath(module_names=["interlet", "router"], member_name="serve"),
+            ],
+            members={"run": run_function},
+        )
 
-    app_package = Package(
-        info=PackageInfo(
-            name="app",
-            description="A fun app for doing math",
-            version=Version(major=1, minor=2),
-        ),
-        modules={"main": main_module},
-    )
+        app_package = Package(
+            info=PackageInfo(
+                name="app",
+                description="A fun app for doing math",
+                version=Version(major=1, minor=2),
+            ),
+            modules={"main": main_module},
+        )
 
-    primary_index = Index(name="primary")
-    secondary_index = Index(name="secondary")
-    indexes = [primary_index, secondary_index]
+        primary_index = Index(name="primary")
+        secondary_index = Index(name="secondary")
+        indexes = [primary_index, secondary_index]
 
-    manager.lock(euler_package)
-    manager.publish(euler_package, primary_index)
+        manager.lock(euler_package)
+        manager.publish(euler_package, primary_index)
 
-    manager.lock(interlet_package)
-    manager.publish(interlet_package, primary_index)
+        manager.lock(interlet_package)
+        manager.publish(interlet_package, primary_index)
 
-    manager.add(app_package, "euler", indexes)
-    manager.add(app_package, "interlet", indexes)
-    manager.lock(app_package)
+        manager.add(app_package, "euler", indexes)
+        manager.add(app_package, "interlet", indexes)
+        manager.lock(app_package)
 
-    manager.print_package_info(euler_package, lock=True, modules=True)
-    manager.print_package_info(interlet_package, lock=True, modules=True)
-    manager.print_package_info(app_package, lock=True, modules=True)
+        manager.print_package_info(euler_package, lock=True, modules=True)
+        manager.print_package_info(interlet_package, lock=True, modules=True)
+        manager.print_package_info(app_package, lock=True, modules=True)
+    except UserError as exc:
+        manager.error(str(exc))
