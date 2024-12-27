@@ -1,10 +1,13 @@
 import builtins
+import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import Optional
+from pathlib import Path
+from typing import Literal, Optional, Union
 
 import inflect
+from pydantic import BaseModel, Field
 from rich.console import Console, Group
 from rich.padding import Padding
 from rich.panel import Panel
@@ -22,88 +25,81 @@ class Type(StrEnum):
     Str = "Str"
 
 
-@dataclass(kw_only=True)
-class Node:
-    pass
-
-
-@dataclass(kw_only=True)
-class Const(Node):
+class Const(BaseModel):
+    node_type: Literal["const"] = "const"
     name: str
     type: Type
 
 
-@dataclass(kw_only=True)
-class Param:
+class Param(BaseModel):
     name: str
     type: Type
 
 
-@dataclass(kw_only=True)
-class Func(Node):
+class Func(BaseModel):
+    node_type: Literal["func"] = "func"
     name: str
     params: dict[str, Param]
     return_type: Type
 
 
-@dataclass(kw_only=True)
-class Import:
+class Import(BaseModel):
     path: list[str]
     member_names: list[str]
 
 
-@dataclass(kw_only=True)
-class Mod(Node):
+class Mod(BaseModel):
+    node_type: Literal["mod"] = "mod"
     name: str
     imports: list[Import]
-    members: dict[str, Node]
+    members: dict[str, "Node"]
 
 
-@dataclass(kw_only=True, frozen=True)
-class Version:
+class Node(BaseModel):
+    node: Union[Const, Func, Mod] = Field(..., discriminator="node_type")
+
+
+class Version(BaseModel):
     major: int
     minor: int
 
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}"
 
+    def __hash__(self) -> int:
+        return hash(str(self))
 
-@dataclass(kw_only=True)
-class Dep:
+
+class Dep(BaseModel):
     name: str
     version: Version
 
 
-@dataclass(kw_only=True)
-class PackageLock:
-    deps: dict[str, Dep] = field(default_factory=dict)
+class PackageLock(BaseModel):
+    deps: dict[str, Dep] = Field(default_factory=dict)
 
 
-@dataclass(kw_only=True)
-class PackageInfo:
+class PackageInfo(BaseModel):
     name: str
     description: str
     version: Version
-    deps: dict[str, Dep] = field(default_factory=dict)
+    deps: dict[str, Dep] = Field(default_factory=dict)
 
 
-@dataclass(kw_only=True)
-class Package:
+class Package(BaseModel):
     info: PackageInfo
     lock: Optional[PackageLock] = None
     members: dict[str, Node]
 
 
-@dataclass(kw_only=True)
-class Namespace:
+class Namespace(BaseModel):
     name: str
-    packages: dict[Version, Package] = field(default_factory=dict)
+    packages: dict[Version, Package] = Field(default_factory=dict)
 
 
-@dataclass(kw_only=True)
-class Index:
+class Index(BaseModel):
     name: str
-    namespaces: dict[str, Namespace] = field(default_factory=dict)
+    namespaces: dict[str, Namespace] = Field(default_factory=dict)
 
 
 class InternalError(Exception):
@@ -129,7 +125,7 @@ class Printer:
 
     def _add_tree_node(self, node: Node, tree: Tree) -> None:
         type_builtin = builtins.type
-        match node:
+        match node.node:
             case Const(name=name, type=type):
                 tree.add(f"[steel_blue1]{name}[black]: [sandy_brown]{type}")
             case Func(name=name, params=params, return_type=return_type):
@@ -206,6 +202,7 @@ class Manager:
 
         # TODO: Check package name is valid with regex
         # TODO: Check that the version is incremented only by one (minor or major)
+        # TODO: Check that the info hasn't been updated more recently than the lock
 
         info = package.info
         if namespace := index.namespaces.get(info.name):
@@ -264,134 +261,27 @@ class Manager:
     def update(self, package: Package) -> None:
         raise NotImplementedError
 
+    def load_package(self, package_filepath: Path) -> Package:
+        with package_filepath.open("r") as fp:
+            package_dict = json.load(fp)
+        return Package(**package_dict)
+
+    def save_package(self, package: Package, package_filepath: Path) -> None:
+        with package_filepath.open("w") as fp:
+            json.dump(package.model_dump(), fp, indent=2)
+
 
 def main(manager: Manager, printer: Printer) -> None:
-    euler_package = Package(
-        info=PackageInfo(
-            name="euler",
-            description="A compilation of useful math stuff",
-            version=Version(major=0, minor=1),
-        ),
-        members={
-            "math": Mod(
-                name="math",
-                imports=[],
-                members={
-                    "pi": Const(name="pi", type=Type.Float),
-                    "e": Const(name="e", type=Type.Float),
-                    "add": Func(
-                        name="add",
-                        params={
-                            "a": Param(name="a", type=Type.Int),
-                            "b": Param(name="b", type=Type.Int),
-                        },
-                        return_type=Type.Int,
-                    ),
-                    "sub": Func(
-                        name="sub",
-                        params={
-                            "a": Param(name="a", type=Type.Int),
-                            "b": Param(name="b", type=Type.Int),
-                        },
-                        return_type=Type.Int,
-                    ),
-                    "trig": Mod(
-                        name="trig",
-                        imports=[],
-                        members={
-                            "sin": Func(
-                                name="sin",
-                                params={"x": Param(name="x", type=Type.Float)},
-                                return_type=Type.Float,
-                            ),
-                            "cos": Func(
-                                name="cos",
-                                params={"x": Param(name="x", type=Type.Float)},
-                                return_type=Type.Float,
-                            ),
-                            "tan": Func(
-                                name="tan",
-                                params={"x": Param(name="x", type=Type.Float)},
-                                return_type=Type.Float,
-                            ),
-                        },
-                    ),
-                },
-            )
-        },
-    )
+    examples_dirpath = Path(__file__).parent.parent.parent / "examples"
+    euler_package_filepath = examples_dirpath / "euler.json"
+    flatty_package_filepath = examples_dirpath / "flatty.json"
+    interlet_package_filepath = examples_dirpath / "interlet.json"
+    app_package_filepath = examples_dirpath / "app.json"
 
-    flatty_package = Package(
-        info=PackageInfo(
-            name="flatty",
-            description="A package for serializing and deserializing data",
-            version=Version(major=2, minor=0),
-        ),
-        members={
-            "serialize": Func(
-                name="serialize",
-                params={
-                    "data": Param(name="s", type=Type.Str),
-                },
-                return_type=Type.Str,
-            ),
-            "deserialize": Func(
-                name="deserialize",
-                params={
-                    "data": Param(name="s", type=Type.Str),
-                },
-                return_type=Type.Str,
-            ),
-        },
-    )
-
-    interlet_package = Package(
-        info=PackageInfo(
-            name="interlet",
-            description="A blazingly fast webserver",
-            version=Version(major=3, minor=4),
-        ),
-        members={
-            "router": Mod(
-                name="router",
-                imports=[Import(path=["flatty"], member_names=["serialize", "deserialize"])],
-                members={
-                    "serve": Func(
-                        name="serve",
-                        params={
-                            "host": Param(name="host", type=Type.Str),
-                            "port": Param(name="port", type=Type.Int),
-                        },
-                        return_type=Type.Null,
-                    )
-                },
-            )
-        },
-    )
-
-    app_package = Package(
-        info=PackageInfo(
-            name="app",
-            description="A fun app for doing math",
-            version=Version(major=1, minor=2),
-        ),
-        members={
-            "main": Mod(
-                name="main",
-                imports=[
-                    Import(path=["euler", "math"], member_names=["add"]),
-                    Import(path=["interlet", "router"], member_names=["serve"]),
-                ],
-                members={
-                    "run": Func(
-                        name="run",
-                        params={},
-                        return_type=Type.Null,
-                    )
-                },
-            )
-        },
-    )
+    euler_package = manager.load_package(euler_package_filepath)
+    flatty_package = manager.load_package(flatty_package_filepath)
+    interlet_package = manager.load_package(interlet_package_filepath)
+    app_package = manager.load_package(app_package_filepath)
 
     primary_index = Index(name="primary")
     secondary_index = Index(name="secondary")
@@ -400,18 +290,23 @@ def main(manager: Manager, printer: Printer) -> None:
     manager.lock(euler_package)
     manager.publish(euler_package, primary_index)
 
-    # manager.lock(flatty_package)
+    manager.lock(flatty_package)
     manager.publish(flatty_package, primary_index)
 
-    manager.add(interlet_package, flatty_package.info.name, indexes)
+    # manager.add(interlet_package, flatty_package.info.name, indexes)
     manager.lock(interlet_package)
     manager.publish(interlet_package, primary_index)
 
-    manager.add(app_package, euler_package.info.name, indexes)
-    manager.add(app_package, interlet_package.info.name, indexes)
+    # manager.add(app_package, euler_package.info.name, indexes)
+    # manager.add(app_package, interlet_package.info.name, indexes)
     manager.lock(app_package)
 
     printer.print_package_info(euler_package, lock=True, modules=True)
     printer.print_package_info(flatty_package, lock=True, modules=True)
     printer.print_package_info(interlet_package, lock=True, modules=True)
     printer.print_package_info(app_package, lock=True, modules=True)
+
+    manager.save_package(euler_package, euler_package_filepath)
+    manager.save_package(flatty_package, flatty_package_filepath)
+    manager.save_package(interlet_package, interlet_package_filepath)
+    manager.save_package(app_package, app_package_filepath)

@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "app",
+    "description": "A fun app for doing math",
+    "version": {
+      "major": 1,
+      "minor": 2
+    },
+    "deps": {
+      "euler": {
+        "name": "euler",
+        "version": {
+          "major": 0,
+          "minor": 1
+        }
+      },
+      "interlet": {
+        "name": "interlet",
+        "version": {
+          "major": 3,
+          "minor": 4
+        }
+      }
+    }
+  },
+  "lock": {
+    "deps": {
+      "euler": {
+        "name": "euler",
+        "version": {
+          "major": 0,
+          "minor": 1
+        }
+      },
+      "interlet": {
+        "name": "interlet",
+        "version": {
+          "major": 3,
+          "minor": 4
+        }
+      }
+    }
+  },
+  "members": {
+    "main": {
+      "node": {
+        "node_type": "mod",
+        "name": "main",
+        "imports": [
+          {
+            "path": [
+              "euler",
+              "math"
+            ],
+            "member_names": [
+              "add"
+            ]
+          },
+          {
+            "path": [
+              "interlet",
+              "router"
+            ],
+            "member_names": [
+              "serve"
+            ]
+          }
+        ],
+        "members": {
+          "run": {
+            "node": {
+              "node_type": "func",
+              "name": "run",
+              "params": {},
+              "return_type": "Null"
+            }
+          }
+        }
+      }
+    }
+  }
+}
