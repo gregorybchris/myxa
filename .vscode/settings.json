@@ -1,0 +1,19 @@
+{
+  "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[python]": { "editor.defaultFormatter": "charliermarsh.ruff" },
+  "[toml]": { "editor.defaultFormatter": "tamasfe.even-better-toml" },
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.detectIndentation": true,
+  "editor.formatOnSave": true,
+  "editor.insertSpaces": true,
+  "editor.rulers": [120],
+  "mypy-type-checker.args": ["--config-file", "pyproject.toml"],
+  "prettier.printWidth": 120,
+  "ruff.configuration": "pyproject.toml",
+  "ruff.nativeServer": true,
+  "cSpell.words": ["myxa", "rprint", "typer"]
+}

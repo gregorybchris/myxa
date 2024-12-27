@@ -1,0 +1,99 @@
+[project]
+authors = [
+    { name = "Chris Gregory", email = "christopher.b.gregory@gmail.com" },
+]
+dependencies = ["pydantic>=2.10.4", "rich>=13.9.4", "typer>=0.15.1"]
+description = "Compatibility aware package manager."
+keywords = [
+    "package",
+    "upgrade",
+    "dependency",
+    "management",
+    "repository",
+    "manager",
+    "compatibility",
+]
+name = "myxa"
+readme = "README.md"
+requires-python = ">=3.12"
+version = "0.1.0"
+
+[tool.uv]
+dev-dependencies = [
+    "covcheck[toml]>=0.4.3",
+    "pytest-cov>=6.0.0",
+    "mypy>=1.14.0",
+    "pytest>=8.3.4",
+    "ruff>=0.8.4",
+    "semver>=3.0.2",
+]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[project.urls]
+repository = "https://github.com/gregorybchris/myxa"
+
+[project.scripts]
+myxa = "myxa.cli:app"
+
+[tool.covcheck]
+branch = 0.0
+line = 0.0
+
+[tool.mypy]
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.ruff]
+line-length = 120
+src = ["src"]
+
+[tool.ruff.lint]
+ignore = ["D100", "D104", "FIX002", "TD002", "TD003"]
+select = [
+    "A",
+    "ARG",
+    "B",
+    "BLE",
+    "C4",
+    "E",
+    "EM",
+    "ERA",
+    "F",
+    "FIX",
+    "G",
+    "I",
+    "ICN",
+    "ISC",
+    "LOG",
+    "N",
+    "PL",
+    "PT",
+    "PTH",
+    "PLR",
+    "RET",
+    "RUF",
+    "SIM",
+    "SLF",
+    "T20",
+    "TCH",
+    "TD",
+    "TID",
+    "W",
+]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 120
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"**/*.py" = ["A001", "A002"]
+"**/tests/**/*.py" = ["SLF", "PLR2004", "PLR6301"]
+"src/myxa/cli.py" = ["T201", "T203"]

@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "name": "myxa CLI",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "src/myxa/cli.py",
+      "console": "integratedTerminal",
+      "args": "run"
+    }
+  ]
+}
