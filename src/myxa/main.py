@@ -243,96 +243,59 @@ class Manager:
 
 def main(manager: Manager) -> None:
     try:
-        add_function = Func(
-            name="add",
-            params={
-                "a": Param(name="a", type=Type.Int),
-                "b": Param(name="b", type=Type.Int),
-            },
-            return_type=Type.Int,
-        )
-
-        sub_function = Func(
-            name="sub",
-            params={
-                "a": Param(name="a", type=Type.Int),
-                "b": Param(name="b", type=Type.Int),
-            },
-            return_type=Type.Int,
-        )
-
-        sin_function = Func(
-            name="sin",
-            params={
-                "x": Param(name="x", type=Type.Float),
-            },
-            return_type=Type.Float,
-        )
-
-        cos_function = Func(
-            name="cos",
-            params={
-                "x": Param(name="x", type=Type.Float),
-            },
-            return_type=Type.Float,
-        )
-
-        tan_function = Func(
-            name="tan",
-            params={
-                "x": Param(name="x", type=Type.Float),
-            },
-            return_type=Type.Float,
-        )
-
-        pi_const = Const(name="pi", type=Type.Float)
-        e_const = Const(name="e", type=Type.Float)
-
-        trig_module = Mod(
-            name="trig",
-            imports=[],
-            members={
-                "sin": sin_function,
-                "cos": cos_function,
-                "tan": tan_function,
-            },
-        )
-
-        math_module = Mod(
-            name="math",
-            imports=[],
-            members={
-                "pi": pi_const,
-                "e": e_const,
-                "add": add_function,
-                "sub": sub_function,
-                "trig": trig_module,
-            },
-        )
-
         euler_package = Package(
             info=PackageInfo(
                 name="euler",
                 description="A compilation of useful math stuff",
                 version=Version(major=0, minor=1),
             ),
-            members={"math": math_module},
-        )
-
-        serialize_function = Func(
-            name="serialize",
-            params={
-                "data": Param(name="s", type=Type.Str),
+            members={
+                "math": Mod(
+                    name="math",
+                    imports=[],
+                    members={
+                        "pi": Const(name="pi", type=Type.Float),
+                        "e": Const(name="e", type=Type.Float),
+                        "add": Func(
+                            name="add",
+                            params={
+                                "a": Param(name="a", type=Type.Int),
+                                "b": Param(name="b", type=Type.Int),
+                            },
+                            return_type=Type.Int,
+                        ),
+                        "sub": Func(
+                            name="sub",
+                            params={
+                                "a": Param(name="a", type=Type.Int),
+                                "b": Param(name="b", type=Type.Int),
+                            },
+                            return_type=Type.Int,
+                        ),
+                        "trig": Mod(
+                            name="trig",
+                            imports=[],
+                            members={
+                                "sin": Func(
+                                    name="sin",
+                                    params={"x": Param(name="x", type=Type.Float)},
+                                    return_type=Type.Float,
+                                ),
+                                "cos": Func(
+                                    name="cos",
+                                    params={"x": Param(name="x", type=Type.Float)},
+                                    return_type=Type.Float,
+                                ),
+                                "tan": Func(
+                                    name="tan",
+                                    params={"x": Param(name="x", type=Type.Float)},
+                                    return_type=Type.Float,
+                                ),
+                            },
+                        ),
+                    },
+                )
             },
-            return_type=Type.Str,
-        )
-
-        deserialize_function = Func(
-            name="deserialize",
-            params={
-                "data": Param(name="s", type=Type.Str),
-            },
-            return_type=Type.Str,
         )
 
         flatty_package = Package(
@@ -342,24 +305,21 @@ def main(manager: Manager) -> None:
                 version=Version(major=2, minor=0),
             ),
             members={
-                "serialize": serialize_function,
-                "deserialize": deserialize_function,
+                "serialize": Func(
+                    name="serialize",
+                    params={
+                        "data": Param(name="s", type=Type.Str),
+                    },
+                    return_type=Type.Str,
+                ),
+                "deserialize": Func(
+                    name="deserialize",
+                    params={
+                        "data": Param(name="s", type=Type.Str),
+                    },
+                    return_type=Type.Str,
+                ),
             },
-        )
-
-        serve_function = Func(
-            name="serve",
-            params={
-                "host": Param(name="host", type=Type.Str),
-                "port": Param(name="port", type=Type.Int),
-            },
-            return_type=Type.Null,
-        )
-
-        router_module = Mod(
-            name="router",
-            imports=[Import(path=["flatty"], member_names=["serialize", "deserialize"])],
-            members={"serve": serve_function},
         )
 
         interlet_package = Package(
@@ -368,22 +328,22 @@ def main(manager: Manager) -> None:
                 description="A blazingly fast webserver",
                 version=Version(major=3, minor=4),
             ),
-            members={"router": router_module},
-        )
-
-        run_function = Func(
-            name="run",
-            params={},
-            return_type=Type.Null,
-        )
-
-        main_module = Mod(
-            name="main",
-            imports=[
-                Import(path=["euler", "math"], member_names=["add"]),
-                Import(path=["interlet", "router"], member_names=["serve"]),
-            ],
-            members={"run": run_function},
+            members={
+                "router": Mod(
+                    name="router",
+                    imports=[Import(path=["flatty"], member_names=["serialize", "deserialize"])],
+                    members={
+                        "serve": Func(
+                            name="serve",
+                            params={
+                                "host": Param(name="host", type=Type.Str),
+                                "port": Param(name="port", type=Type.Int),
+                            },
+                            return_type=Type.Null,
+                        )
+                    },
+                )
+            },
         )
 
         app_package = Package(
@@ -392,7 +352,22 @@ def main(manager: Manager) -> None:
                 description="A fun app for doing math",
                 version=Version(major=1, minor=2),
             ),
-            members={"main": main_module},
+            members={
+                "main": Mod(
+                    name="main",
+                    imports=[
+                        Import(path=["euler", "math"], member_names=["add"]),
+                        Import(path=["interlet", "router"], member_names=["serve"]),
+                    ],
+                    members={
+                        "run": Func(
+                            name="run",
+                            params={},
+                            return_type=Type.Null,
+                        )
+                    },
+                )
+            },
         )
 
         primary_index = Index(name="primary")
@@ -405,12 +380,12 @@ def main(manager: Manager) -> None:
         manager.lock(flatty_package)
         manager.publish(flatty_package, primary_index)
 
-        manager.add(interlet_package, "flatty", indexes)
+        manager.add(interlet_package, flatty_package.info.name, indexes)
         manager.lock(interlet_package)
         manager.publish(interlet_package, primary_index)
 
-        manager.add(app_package, "euler", indexes)
-        manager.add(app_package, "interlet", indexes)
+        manager.add(app_package, euler_package.info.name, indexes)
+        manager.add(app_package, interlet_package.info.name, indexes)
         manager.lock(app_package)
 
         manager.print_package_info(euler_package, lock=True, modules=True)
