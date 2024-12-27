@@ -21,3 +21,7 @@ uv sync
 ```bash
 uv run myxa
 ```
+
+## Package name
+
+Myxa is named after the slime mold _Myxogastria_, the Ancient Greek word μύξα _myxa_, meaning "mucus".
