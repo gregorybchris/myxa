@@ -1,0 +1,225 @@
+{
+  "name": "primary",
+  "namespaces": {
+    "euler": {
+      "name": "euler",
+      "packages": {
+        "0.1": {
+          "info": {
+            "name": "euler",
+            "description": "A compilation of useful math stuff",
+            "version": {
+              "major": 0,
+              "minor": 1
+            },
+            "deps": {}
+          },
+          "lock": {
+            "deps": {}
+          },
+          "members": {
+            "math": {
+              "node_type": "mod",
+              "name": "math",
+              "imports": [],
+              "members": {
+                "pi": {
+                  "node_type": "const",
+                  "name": "pi",
+                  "type": "Float"
+                },
+                "e": {
+                  "node_type": "const",
+                  "name": "e",
+                  "type": "Float"
+                },
+                "add": {
+                  "node_type": "func",
+                  "name": "add",
+                  "params": {
+                    "a": {
+                      "name": "a",
+                      "type": "Int"
+                    },
+                    "b": {
+                      "name": "b",
+                      "type": "Int"
+                    }
+                  },
+                  "return_type": "Int"
+                },
+                "sub": {
+                  "node_type": "func",
+                  "name": "sub",
+                  "params": {
+                    "a": {
+                      "name": "a",
+                      "type": "Int"
+                    },
+                    "b": {
+                      "name": "b",
+                      "type": "Int"
+                    }
+                  },
+                  "return_type": "Int"
+                },
+                "trig": {
+                  "node_type": "mod",
+                  "name": "trig",
+                  "imports": [],
+                  "members": {
+                    "sin": {
+                      "node_type": "func",
+                      "name": "sin",
+                      "params": {
+                        "x": {
+                          "name": "x",
+                          "type": "Float"
+                        }
+                      },
+                      "return_type": "Float"
+                    },
+                    "cos": {
+                      "node_type": "func",
+                      "name": "cos",
+                      "params": {
+                        "x": {
+                          "name": "x",
+                          "type": "Float"
+                        }
+                      },
+                      "return_type": "Float"
+                    },
+                    "tan": {
+                      "node_type": "func",
+                      "name": "tan",
+                      "params": {
+                        "x": {
+                          "name": "x",
+                          "type": "Float"
+                        }
+                      },
+                      "return_type": "Float"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "flatty": {
+      "name": "flatty",
+      "packages": {
+        "2.0": {
+          "info": {
+            "name": "flatty",
+            "description": "A package for serializing and deserializing data",
+            "version": {
+              "major": 2,
+              "minor": 0
+            },
+            "deps": {}
+          },
+          "lock": {
+            "deps": {}
+          },
+          "members": {
+            "serialize": {
+              "node_type": "func",
+              "name": "serialize",
+              "params": {
+                "data": {
+                  "name": "s",
+                  "type": "Str"
+                }
+              },
+              "return_type": "Str"
+            },
+            "deserialize": {
+              "node_type": "func",
+              "name": "deserialize",
+              "params": {
+                "data": {
+                  "name": "s",
+                  "type": "Str"
+                }
+              },
+              "return_type": "Str"
+            }
+          }
+        }
+      }
+    },
+    "interlet": {
+      "name": "interlet",
+      "packages": {
+        "3.4": {
+          "info": {
+            "name": "interlet",
+            "description": "A blazingly fast webserver",
+            "version": {
+              "major": 3,
+              "minor": 4
+            },
+            "deps": {
+              "flatty": {
+                "name": "flatty",
+                "version": {
+                  "major": 2,
+                  "minor": 0
+                }
+              }
+            }
+          },
+          "lock": {
+            "deps": {
+              "flatty": {
+                "name": "flatty",
+                "version": {
+                  "major": 2,
+                  "minor": 0
+                }
+              }
+            }
+          },
+          "members": {
+            "router": {
+              "node_type": "mod",
+              "name": "router",
+              "imports": [
+                {
+                  "path": [
+                    "flatty"
+                  ],
+                  "member_names": [
+                    "serialize",
+                    "deserialize"
+                  ]
+                }
+              ],
+              "members": {
+                "serve": {
+                  "node_type": "func",
+                  "name": "serve",
+                  "params": {
+                    "host": {
+                      "name": "host",
+                      "type": "Str"
+                    },
+                    "port": {
+                      "name": "port",
+                      "type": "Int"
+                    }
+                  },
+                  "return_type": "Null"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
