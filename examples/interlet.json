@@ -29,38 +29,34 @@
   },
   "members": {
     "router": {
-      "node": {
-        "node_type": "mod",
-        "name": "router",
-        "imports": [
-          {
-            "path": [
-              "flatty"
-            ],
-            "member_names": [
-              "serialize",
-              "deserialize"
-            ]
-          }
-        ],
-        "members": {
-          "serve": {
-            "node": {
-              "node_type": "func",
-              "name": "serve",
-              "params": {
-                "host": {
-                  "name": "host",
-                  "type": "Str"
-                },
-                "port": {
-                  "name": "port",
-                  "type": "Int"
-                }
-              },
-              "return_type": "Null"
+      "node_type": "mod",
+      "name": "router",
+      "imports": [
+        {
+          "path": [
+            "flatty"
+          ],
+          "member_names": [
+            "serialize",
+            "deserialize"
+          ]
+        }
+      ],
+      "members": {
+        "serve": {
+          "node_type": "func",
+          "name": "serve",
+          "params": {
+            "host": {
+              "name": "host",
+              "type": "Str"
+            },
+            "port": {
+              "name": "port",
+              "type": "Int"
             }
-          }
+          },
+          "return_type": "Null"
         }
       }
     }

@@ -55,8 +55,7 @@ class Mod(BaseModel):
     members: dict[str, "Node"]
 
 
-class Node(BaseModel):
-    node: Union[Const, Func, Mod] = Field(..., discriminator="node_type")
+Node = Union[Const, Func, Mod]
 
 
 class Version(BaseModel):
@@ -125,7 +124,7 @@ class Printer:
 
     def _add_tree_node(self, node: Node, tree: Tree) -> None:
         type_builtin = builtins.type
-        match node.node:
+        match node:
             case Const(name=name, type=type):
                 tree.add(f"[steel_blue1]{name}[black]: [sandy_brown]{type}")
             case Func(name=name, params=params, return_type=return_type):
@@ -201,7 +200,7 @@ class Manager:
             raise UserError(msg)
 
         # TODO: Check package name is valid with regex
-        # TODO: Check that the version is incremented only by one (minor or major)
+        # TODO: Check that the version is incremented only by one (minor or major), should not skip a major or minor
         # TODO: Check that the info hasn't been updated more recently than the lock
 
         info = package.info

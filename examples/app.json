@@ -43,38 +43,34 @@
   },
   "members": {
     "main": {
-      "node": {
-        "node_type": "mod",
-        "name": "main",
-        "imports": [
-          {
-            "path": [
-              "euler",
-              "math"
-            ],
-            "member_names": [
-              "add"
-            ]
-          },
-          {
-            "path": [
-              "interlet",
-              "router"
-            ],
-            "member_names": [
-              "serve"
-            ]
-          }
-        ],
-        "members": {
-          "run": {
-            "node": {
-              "node_type": "func",
-              "name": "run",
-              "params": {},
-              "return_type": "Null"
-            }
-          }
+      "node_type": "mod",
+      "name": "main",
+      "imports": [
+        {
+          "path": [
+            "euler",
+            "math"
+          ],
+          "member_names": [
+            "add"
+          ]
+        },
+        {
+          "path": [
+            "interlet",
+            "router"
+          ],
+          "member_names": [
+            "serve"
+          ]
+        }
+      ],
+      "members": {
+        "run": {
+          "node_type": "func",
+          "name": "run",
+          "params": {},
+          "return_type": "Null"
         }
       }
     }

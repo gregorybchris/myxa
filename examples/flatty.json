@@ -13,30 +13,26 @@
   },
   "members": {
     "serialize": {
-      "node": {
-        "node_type": "func",
-        "name": "serialize",
-        "params": {
-          "data": {
-            "name": "s",
-            "type": "Str"
-          }
-        },
-        "return_type": "Str"
-      }
+      "node_type": "func",
+      "name": "serialize",
+      "params": {
+        "data": {
+          "name": "s",
+          "type": "Str"
+        }
+      },
+      "return_type": "Str"
     },
     "deserialize": {
-      "node": {
-        "node_type": "func",
-        "name": "deserialize",
-        "params": {
-          "data": {
-            "name": "s",
-            "type": "Str"
-          }
-        },
-        "return_type": "Str"
-      }
+      "node_type": "func",
+      "name": "deserialize",
+      "params": {
+        "data": {
+          "name": "s",
+          "type": "Str"
+        }
+      },
+      "return_type": "Str"
     }
   }
 }
