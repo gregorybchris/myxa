@@ -51,39 +51,48 @@ class Version:
 
 
 @dataclass(kw_only=True)
-class Dependency:
+class Dep:
     name: str
     version: Version
+    optional: bool = False
+    dev: bool = False
+
+
+@dataclass(kw_only=True)
+class Extra:
+    name: str
+    dep_names: list[str]
 
 
 @dataclass(kw_only=True)
 class PackageLock:
-    dependencies: dict[str, Dependency]
+    deps: dict[str, Dep]
 
 
 @dataclass(kw_only=True)
-class PackageDefinition:
+class PackageDef:
     name: str
     description: str
     version: Version
-    dependencies: dict[str, str]
+    deps: dict[str, str]
+    extras: dict[str, Extra]
 
 
 @dataclass(kw_only=True)
 class Package:
-    definition: PackageDefinition
+    definition: PackageDef
     lock: PackageLock
     modules: list[Mod]
 
 
 @dataclass(kw_only=True)
-class Repository:
+class Repo:
     packages: dict[str, Package] = field(default_factory=dict)
 
 
 @dataclass(kw_only=True)
 class Manager:
-    repository: Repository
+    repo: Repo
 
     def lock(self, package: Package) -> None:
         raise NotImplementedError
@@ -91,7 +100,7 @@ class Manager:
     def publish(self, package: Package) -> None:
         raise NotImplementedError
 
-    def add(self, package: Package, dependency: Dependency) -> None:
+    def add(self, package: Package, dependency: Dep) -> None:
         raise NotImplementedError
 
     def update(self, package: Package) -> None:
@@ -99,8 +108,8 @@ class Manager:
 
 
 def main() -> None:
-    repository = Repository()
-    manager = Manager(repository=repository)
+    repo = Repo()
+    manager = Manager(repo=repo)
 
     add_function = Func(
         name="add",
@@ -120,16 +129,17 @@ def main() -> None:
     )
 
     euler_package = Package(
-        definition=PackageDefinition(
+        definition=PackageDef(
             name="euler",
             description="A package for math functions",
             version=Version(alpha=0, beta=1),
-            dependencies={},
+            deps={},
+            extras={},
         ),
-        lock=PackageLock(dependencies={}),
+        lock=PackageLock(deps={}),
         modules=[math_module],
     )
 
     print(euler_package)
 
-    manager.publish(euler_package)
+    # manager.publish(euler_package)
