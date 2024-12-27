@@ -47,15 +47,15 @@ class Func(Node):
 
 
 @dataclass(kw_only=True)
-class ImportPath:
-    module_names: list[str]
+class Import:
+    path: list[str]
     member_names: list[str]
 
 
 @dataclass(kw_only=True)
 class Mod(Node):
     name: str
-    imports: list[ImportPath]
+    imports: list[Import]
     members: dict[str, Node]
 
 
@@ -358,7 +358,7 @@ def main(manager: Manager) -> None:
 
         router_module = Mod(
             name="router",
-            imports=[ImportPath(module_names=["flatty"], member_names=["serialize", "deserialize"])],
+            imports=[Import(path=["flatty"], member_names=["serialize", "deserialize"])],
             members={"serve": serve_function},
         )
 
@@ -380,8 +380,8 @@ def main(manager: Manager) -> None:
         main_module = Mod(
             name="main",
             imports=[
-                ImportPath(module_names=["euler", "math"], member_names=["add"]),
-                ImportPath(module_names=["interlet", "router"], member_names=["serve"]),
+                Import(path=["euler", "math"], member_names=["add"]),
+                Import(path=["interlet", "router"], member_names=["serve"]),
             ],
             members={"run": run_function},
         )
