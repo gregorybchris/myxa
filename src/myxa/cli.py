@@ -1,14 +1,16 @@
 import logging
 
+from rich.console import Console
 from rich.logging import RichHandler
 from typer import Typer
 
-from myxa.main import main
+from myxa.main import Manager, main
 
 logger = logging.getLogger(__name__)
 
 
 app = Typer(pretty_exceptions_enable=False)
+console = Console()
 
 
 def set_logger_config(info: bool, debug: bool) -> None:
@@ -38,4 +40,5 @@ def run(
     set_logger_config(info, debug)
     logger.info("Running myxa")
 
-    main()
+    manager = Manager(console=console)
+    main(manager)
