@@ -2,7 +2,12 @@
 authors = [
     { name = "Chris Gregory", email = "christopher.b.gregory@gmail.com" },
 ]
-dependencies = ["pydantic>=2.10.4", "rich>=13.9.4", "typer>=0.15.1"]
+dependencies = [
+    "inflect>=7.4.0",
+    "pydantic>=2.10.4",
+    "rich>=13.9.4",
+    "typer>=0.15.1",
+]
 description = "Compatibility aware package manager."
 keywords = [
     "package",

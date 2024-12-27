@@ -1,10 +1,11 @@
 import logging
 
+import inflect
 from rich.console import Console
 from rich.logging import RichHandler
 from typer import Typer
 
-from myxa.main import Manager, main
+from myxa.main import Manager, Printer, UserError, main
 
 logger = logging.getLogger(__name__)
 
@@ -40,5 +41,10 @@ def run(
     set_logger_config(info, debug)
     logger.info("Running myxa")
 
-    manager = Manager(console=console)
-    main(manager)
+    printer = Printer(console=console)
+    inflect_engine = inflect.engine()
+    manager = Manager(printer=printer, inflect_engine=inflect_engine)
+    try:
+        main(manager, printer)
+    except UserError as exc:
+        printer.print_error(str(exc))

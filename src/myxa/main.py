@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Optional
 
+import inflect
 from rich.console import Console, Group
 from rich.padding import Padding
 from rich.panel import Panel
@@ -115,67 +116,18 @@ class UserError(Exception):
 
 
 @dataclass(kw_only=True)
-class Manager:
+class Printer:
     console: Console
 
-    def error(self, msg: str) -> None:
+    def print_error(self, msg: str) -> None:
         self.console.print(f"[bold red]{msg}")
         sys.exit()
 
-    def publish(self, package: Package, index: Index) -> None:
-        if package.lock is None:
-            msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
-            raise UserError(msg)
+    def print_message(self, msg: str) -> None:
+        self.console.print(f"[reset][bold]{msg}")
 
-        # TODO: Check package name is valid with regex
-        # TODO: Check that the version is incremented only by one (minor or major)
-
-        info = package.info
-        if namespace := index.namespaces.get(info.name):
-            # TODO: Check that if this package correctly increments major version if changes are breaking
-            if info.version in namespace.packages:
-                msg = f"Package {info.name} version {info.version} already exists in index {index.name}"
-                raise UserError(msg)
-            namespace.packages[info.version] = package
-        else:
-            namespace = Namespace(name=info.name)
-            namespace.packages[info.version] = package
-            index.namespaces[info.name] = namespace
-
-    def _find_namespace(self, name: str, indexes: list[Index]) -> Namespace:
-        for index in indexes:
-            if namespace := index.namespaces.get(name):
-                return namespace
-        msg = f"Package {name} not found in any provided indexes: {[index.name for index in indexes]}"
-        raise UserError(msg)
-
-    def _get_latest_package(self, namespace: Namespace) -> Package:
-        versions = list(namespace.packages.keys())
-        latest_version = max(versions, key=lambda v: (v.major, v.minor))
-        return namespace.packages[latest_version]
-
-    def add(self, package: Package, dep_name: str, indexes: list[Index]) -> None:
-        self.console.print(f"Adding [steel_blue1]{dep_name}[reset] to [steel_blue1]{package.info.name}[reset]...")
-        if package.info.deps.get(dep_name):
-            msg = f"{dep_name} is already a dependency of {package.info.name}"
-            raise UserError(msg)
-
-        # TODO: Resolve the latest compatible version of the dep
-        namespace = self._find_namespace(dep_name, indexes)
-        latest_package = self._get_latest_package(namespace)
-        version = latest_package.info.version
-        dep = Dep(name=dep_name, version=version)
-        package.info.deps[dep_name] = dep
-
-    def lock(self, package: Package) -> None:
-        new_lock = PackageLock()
-        # TODO: Resolve the latest compatible version of each dep
-        for dep in package.info.deps.values():
-            new_lock.deps[dep.name] = dep
-        package.lock = new_lock
-
-    def update(self, package: Package) -> None:
-        raise NotImplementedError
+    def print_success(self, msg: str) -> None:
+        self.console.print(f"[bold green]{msg}")
 
     def _add_tree_node(self, node: Node, tree: Tree) -> None:
         type_builtin = builtins.type
@@ -241,156 +193,227 @@ class Manager:
         self.console.print(panel)
 
 
-def main(manager: Manager) -> None:
-    try:
-        euler_package = Package(
-            info=PackageInfo(
-                name="euler",
-                description="A compilation of useful math stuff",
-                version=Version(major=0, minor=1),
-            ),
-            members={
-                "math": Mod(
-                    name="math",
-                    imports=[],
-                    members={
-                        "pi": Const(name="pi", type=Type.Float),
-                        "e": Const(name="e", type=Type.Float),
-                        "add": Func(
-                            name="add",
-                            params={
-                                "a": Param(name="a", type=Type.Int),
-                                "b": Param(name="b", type=Type.Int),
-                            },
-                            return_type=Type.Int,
-                        ),
-                        "sub": Func(
-                            name="sub",
-                            params={
-                                "a": Param(name="a", type=Type.Int),
-                                "b": Param(name="b", type=Type.Int),
-                            },
-                            return_type=Type.Int,
-                        ),
-                        "trig": Mod(
-                            name="trig",
-                            imports=[],
-                            members={
-                                "sin": Func(
-                                    name="sin",
-                                    params={"x": Param(name="x", type=Type.Float)},
-                                    return_type=Type.Float,
-                                ),
-                                "cos": Func(
-                                    name="cos",
-                                    params={"x": Param(name="x", type=Type.Float)},
-                                    return_type=Type.Float,
-                                ),
-                                "tan": Func(
-                                    name="tan",
-                                    params={"x": Param(name="x", type=Type.Float)},
-                                    return_type=Type.Float,
-                                ),
-                            },
-                        ),
-                    },
-                )
-            },
+@dataclass(kw_only=True)
+class Manager:
+    printer: Printer
+    inflect_engine: inflect.engine
+
+    def publish(self, package: Package, index: Index) -> None:
+        self.printer.print_message(
+            f"Publishing package {package.info.name} version {package.info.version} to index {index.name}..."
+        )
+        if package.lock is None:
+            msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
+            raise UserError(msg)
+
+        # TODO: Check package name is valid with regex
+        # TODO: Check that the version is incremented only by one (minor or major)
+
+        info = package.info
+        if namespace := index.namespaces.get(info.name):
+            # TODO: Check that if this package correctly increments major version if changes are breaking
+            if info.version in namespace.packages:
+                msg = f"Package {info.name} version {info.version} already exists in index {index.name}"
+                raise UserError(msg)
+            namespace.packages[info.version] = package
+        else:
+            namespace = Namespace(name=info.name)
+            namespace.packages[info.version] = package
+            index.namespaces[info.name] = namespace
+        self.printer.print_success(f"Published {info.name} version {info.version} to index {index.name}")
+
+    def _find_namespace(self, name: str, indexes: list[Index]) -> Namespace:
+        for index in indexes:
+            if namespace := index.namespaces.get(name):
+                return namespace
+        msg = f"Package {name} not found in any provided indexes: {[index.name for index in indexes]}"
+        raise UserError(msg)
+
+    def _get_latest_package(self, namespace: Namespace) -> Package:
+        versions = list(namespace.packages.keys())
+        latest_version = max(versions, key=lambda v: (v.major, v.minor))
+        return namespace.packages[latest_version]
+
+    def add(self, package: Package, dep_name: str, indexes: list[Index]) -> None:
+        self.printer.print_message(f"Adding dependency {dep_name} to package {package.info.name}...")
+        if package.info.deps.get(dep_name):
+            msg = f"{dep_name} is already a dependency of {package.info.name}"
+            raise UserError(msg)
+
+        # TODO: Resolve the latest compatible version of the dep
+        namespace = self._find_namespace(dep_name, indexes)
+        latest_package = self._get_latest_package(namespace)
+        version = latest_package.info.version
+        dep = Dep(name=dep_name, version=version)
+        package.info.deps[dep_name] = dep
+        self.printer.print_success(f"Added {dep_name} version {version} to {package.info.name}")
+
+    def _resolve(self, package: Package, indexes: list[Index]) -> None:
+        pass
+
+    def lock(self, package: Package) -> None:
+        self.printer.print_message(f"Locking package {package.info.name}...")
+        new_lock = PackageLock()
+        # TODO: Resolve the latest compatible version of each dep
+        for dep in package.info.deps.values():
+            new_lock.deps[dep.name] = dep
+        package.lock = new_lock
+        n_deps = len(new_lock.deps)
+        self.printer.print_success(
+            f"Locked {package.info.name} with {n_deps} {self.inflect_engine.plural_noun('dependency', n_deps)}"
         )
 
-        flatty_package = Package(
-            info=PackageInfo(
-                name="flatty",
-                description="A package for serializing and deserializing data",
-                version=Version(major=2, minor=0),
+    def update(self, package: Package) -> None:
+        raise NotImplementedError
+
+
+def main(manager: Manager, printer: Printer) -> None:
+    euler_package = Package(
+        info=PackageInfo(
+            name="euler",
+            description="A compilation of useful math stuff",
+            version=Version(major=0, minor=1),
+        ),
+        members={
+            "math": Mod(
+                name="math",
+                imports=[],
+                members={
+                    "pi": Const(name="pi", type=Type.Float),
+                    "e": Const(name="e", type=Type.Float),
+                    "add": Func(
+                        name="add",
+                        params={
+                            "a": Param(name="a", type=Type.Int),
+                            "b": Param(name="b", type=Type.Int),
+                        },
+                        return_type=Type.Int,
+                    ),
+                    "sub": Func(
+                        name="sub",
+                        params={
+                            "a": Param(name="a", type=Type.Int),
+                            "b": Param(name="b", type=Type.Int),
+                        },
+                        return_type=Type.Int,
+                    ),
+                    "trig": Mod(
+                        name="trig",
+                        imports=[],
+                        members={
+                            "sin": Func(
+                                name="sin",
+                                params={"x": Param(name="x", type=Type.Float)},
+                                return_type=Type.Float,
+                            ),
+                            "cos": Func(
+                                name="cos",
+                                params={"x": Param(name="x", type=Type.Float)},
+                                return_type=Type.Float,
+                            ),
+                            "tan": Func(
+                                name="tan",
+                                params={"x": Param(name="x", type=Type.Float)},
+                                return_type=Type.Float,
+                            ),
+                        },
+                    ),
+                },
+            )
+        },
+    )
+
+    flatty_package = Package(
+        info=PackageInfo(
+            name="flatty",
+            description="A package for serializing and deserializing data",
+            version=Version(major=2, minor=0),
+        ),
+        members={
+            "serialize": Func(
+                name="serialize",
+                params={
+                    "data": Param(name="s", type=Type.Str),
+                },
+                return_type=Type.Str,
             ),
-            members={
-                "serialize": Func(
-                    name="serialize",
-                    params={
-                        "data": Param(name="s", type=Type.Str),
-                    },
-                    return_type=Type.Str,
-                ),
-                "deserialize": Func(
-                    name="deserialize",
-                    params={
-                        "data": Param(name="s", type=Type.Str),
-                    },
-                    return_type=Type.Str,
-                ),
-            },
-        )
-
-        interlet_package = Package(
-            info=PackageInfo(
-                name="interlet",
-                description="A blazingly fast webserver",
-                version=Version(major=3, minor=4),
+            "deserialize": Func(
+                name="deserialize",
+                params={
+                    "data": Param(name="s", type=Type.Str),
+                },
+                return_type=Type.Str,
             ),
-            members={
-                "router": Mod(
-                    name="router",
-                    imports=[Import(path=["flatty"], member_names=["serialize", "deserialize"])],
-                    members={
-                        "serve": Func(
-                            name="serve",
-                            params={
-                                "host": Param(name="host", type=Type.Str),
-                                "port": Param(name="port", type=Type.Int),
-                            },
-                            return_type=Type.Null,
-                        )
-                    },
-                )
-            },
-        )
+        },
+    )
 
-        app_package = Package(
-            info=PackageInfo(
-                name="app",
-                description="A fun app for doing math",
-                version=Version(major=1, minor=2),
-            ),
-            members={
-                "main": Mod(
-                    name="main",
-                    imports=[
-                        Import(path=["euler", "math"], member_names=["add"]),
-                        Import(path=["interlet", "router"], member_names=["serve"]),
-                    ],
-                    members={
-                        "run": Func(
-                            name="run",
-                            params={},
-                            return_type=Type.Null,
-                        )
-                    },
-                )
-            },
-        )
+    interlet_package = Package(
+        info=PackageInfo(
+            name="interlet",
+            description="A blazingly fast webserver",
+            version=Version(major=3, minor=4),
+        ),
+        members={
+            "router": Mod(
+                name="router",
+                imports=[Import(path=["flatty"], member_names=["serialize", "deserialize"])],
+                members={
+                    "serve": Func(
+                        name="serve",
+                        params={
+                            "host": Param(name="host", type=Type.Str),
+                            "port": Param(name="port", type=Type.Int),
+                        },
+                        return_type=Type.Null,
+                    )
+                },
+            )
+        },
+    )
 
-        primary_index = Index(name="primary")
-        secondary_index = Index(name="secondary")
-        indexes = [primary_index, secondary_index]
+    app_package = Package(
+        info=PackageInfo(
+            name="app",
+            description="A fun app for doing math",
+            version=Version(major=1, minor=2),
+        ),
+        members={
+            "main": Mod(
+                name="main",
+                imports=[
+                    Import(path=["euler", "math"], member_names=["add"]),
+                    Import(path=["interlet", "router"], member_names=["serve"]),
+                ],
+                members={
+                    "run": Func(
+                        name="run",
+                        params={},
+                        return_type=Type.Null,
+                    )
+                },
+            )
+        },
+    )
 
-        manager.lock(euler_package)
-        manager.publish(euler_package, primary_index)
+    primary_index = Index(name="primary")
+    secondary_index = Index(name="secondary")
+    indexes = [primary_index, secondary_index]
 
-        manager.lock(flatty_package)
-        manager.publish(flatty_package, primary_index)
+    manager.lock(euler_package)
+    manager.publish(euler_package, primary_index)
 
-        manager.add(interlet_package, flatty_package.info.name, indexes)
-        manager.lock(interlet_package)
-        manager.publish(interlet_package, primary_index)
+    manager.lock(flatty_package)
+    manager.publish(flatty_package, primary_index)
 
-        manager.add(app_package, euler_package.info.name, indexes)
-        manager.add(app_package, interlet_package.info.name, indexes)
-        manager.lock(app_package)
+    manager.add(interlet_package, flatty_package.info.name, indexes)
+    manager.lock(interlet_package)
+    manager.publish(interlet_package, primary_index)
 
-        manager.print_package_info(euler_package, lock=True, modules=True)
-        manager.print_package_info(flatty_package, lock=True, modules=True)
-        manager.print_package_info(interlet_package, lock=True, modules=True)
-        manager.print_package_info(app_package, lock=True, modules=True)
-    except UserError as exc:
-        manager.error(str(exc))
+    manager.add(app_package, euler_package.info.name, indexes)
+    manager.add(app_package, interlet_package.info.name, indexes)
+    manager.lock(app_package)
+
+    printer.print_package_info(euler_package, lock=True, modules=True)
+    printer.print_package_info(flatty_package, lock=True, modules=True)
+    printer.print_package_info(interlet_package, lock=True, modules=True)
+    printer.print_package_info(app_package, lock=True, modules=True)
