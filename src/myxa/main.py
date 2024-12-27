@@ -17,6 +17,7 @@ class Type(StrEnum):
     Int = "Int"
     Float = "Float"
     Bool = "Bool"
+    Null = "Null"
 
 
 @dataclass(kw_only=True)
@@ -24,8 +25,14 @@ class Node:
     pass
 
 
-@dataclass
-class Param(Node):
+@dataclass(kw_only=True)
+class Const:
+    name: str
+    type: Type
+
+
+@dataclass(kw_only=True)
+class Param:
     name: str
     type: Type
 
@@ -38,7 +45,7 @@ class Func(Node):
 
 
 @dataclass(kw_only=True)
-class ImportPath(Node):
+class ImportPath:
     module_names: list[str]
     member_name: str
 
@@ -156,18 +163,20 @@ class Manager:
         raise NotImplementedError
 
     def _add_mod_tree(self, mod: Mod, tree: Tree) -> None:
-        mod_tree = tree.add(mod.name, style="steel_blue3")
+        mod_tree = tree.add(mod.name, style="purple")
         for member in mod.members.values():
             match member:
                 case Mod(name=name):
                     self._add_mod_tree(member, mod_tree)
                 case Func(name=name, params=params, return_type=return_type):
-                    func_str = f"{name}("
+                    func_str = f"[steel_blue1]{name}[black]("
                     for param_name, param in params.items():
-                        func_str += f"{param_name}: {param.type}, "
-                    func_str = func_str[:-2] + ")"
-                    func_str += f" -> {return_type}"
-                    mod_tree.add(func_str, style="steel_blue1")
+                        func_str += f"[red]{param_name}[black]: [light_goldenrod2]{param.type}, "
+                    if len(params) > 0:
+                        func_str = func_str[:-2]
+                    func_str += "[black])"
+                    func_str += f"[black] -> [sandy_brown]{return_type}"
+                    mod_tree.add(func_str)
                 case _:
                     msg = f"Unexpected member type {type(member)}"
                     raise ValueError(msg)
@@ -218,8 +227,8 @@ def main(manager: Manager) -> None:
     add_function = Func(
         name="add",
         params={
-            "a": Param("a", Type.Int),
-            "b": Param("b", Type.Int),
+            "a": Param(name="a", type=Type.Int),
+            "b": Param(name="b", type=Type.Int),
         },
         return_type=Type.Int,
     )
@@ -227,8 +236,8 @@ def main(manager: Manager) -> None:
     sub_function = Func(
         name="sub",
         params={
-            "a": Param("a", Type.Int),
-            "b": Param("b", Type.Int),
+            "a": Param(name="a", type=Type.Int),
+            "b": Param(name="b", type=Type.Int),
         },
         return_type=Type.Int,
     )
@@ -236,7 +245,7 @@ def main(manager: Manager) -> None:
     sin_function = Func(
         name="sin",
         params={
-            "x": Param("x", Type.Float),
+            "x": Param(name="x", type=Type.Float),
         },
         return_type=Type.Float,
     )
@@ -244,7 +253,7 @@ def main(manager: Manager) -> None:
     cos_function = Func(
         name="cos",
         params={
-            "x": Param("x", Type.Float),
+            "x": Param(name="x", type=Type.Float),
         },
         return_type=Type.Float,
     )
@@ -252,7 +261,7 @@ def main(manager: Manager) -> None:
     tan_function = Func(
         name="tan",
         params={
-            "x": Param("x", Type.Float),
+            "x": Param(name="x", type=Type.Float),
         },
         return_type=Type.Float,
     )
@@ -280,22 +289,55 @@ def main(manager: Manager) -> None:
     euler_package = Package(
         info=PackageInfo(
             name="euler",
-            description="A package for math functions",
+            description="A compilation of important math functions",
             version=Version(major=0, minor=1),
         ),
         modules={"math": math_module},
     )
 
+    serve_function = Func(
+        name="serve",
+        params={
+            "host": Param(name="host", type=Type.Str),
+            "port": Param(name="port", type=Type.Int),
+        },
+        return_type=Type.Null,
+    )
+
+    router_module = Mod(
+        name="router",
+        imports=[],
+        members={"serve": serve_function},
+    )
+
+    webserver_package = Package(
+        info=PackageInfo(
+            name="webserver",
+            description="A simple webserver",
+            version=Version(major=1, minor=0),
+        ),
+        modules={"router": router_module},
+    )
+
+    run_function = Func(
+        name="run",
+        params={},
+        return_type=Type.Null,
+    )
+
     main_module = Mod(
         name="main",
-        imports=[ImportPath(module_names=["euler", "math"], member_name="add")],
-        members={},
+        imports=[
+            ImportPath(module_names=["euler", "math"], member_name="add"),
+            ImportPath(module_names=["webserver", "router"], member_name="serve"),
+        ],
+        members={"run": run_function},
     )
 
     app_package = Package(
         info=PackageInfo(
             name="app",
-            description="A fun app",
+            description="A fun app for doing math",
             version=Version(major=1, minor=2),
         ),
         modules={"main": main_module},
@@ -308,8 +350,13 @@ def main(manager: Manager) -> None:
     manager.lock(euler_package)
     manager.publish(euler_package, primary_index)
 
+    manager.lock(webserver_package)
+    manager.publish(webserver_package, primary_index)
+
     manager.add(app_package, "euler", indexes)
+    manager.add(app_package, "webserver", indexes)
     manager.lock(app_package)
 
     manager.print_package_info(euler_package, lock=True, modules=True)
-    manager.print_package_info(app_package, lock=True)
+    manager.print_package_info(webserver_package, lock=True, modules=True)
+    manager.print_package_info(app_package, lock=True, modules=True)
