@@ -17,6 +17,7 @@ from myxa.printer import Printer
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_PACKAGE_FILEPATH = Path("package.json")
 
 app = Typer(pretty_exceptions_enable=False)
 console = Console()
@@ -60,13 +61,11 @@ def save_index(manager: Manager, index: Index) -> None:
 
 
 def load_package(manager: Manager) -> Package:
-    package_filepath = Path("package.json")
-    return manager.load_package(package_filepath)
+    return manager.load_package(DEFAULT_PACKAGE_FILEPATH)
 
 
 def save_package(manager: Manager, package: Package) -> None:
-    package_filepath = Path("package.json")
-    manager.save_package(package, package_filepath)
+    manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @contextmanager
@@ -79,16 +78,15 @@ def error_handler(manager: Manager, debug: bool = False) -> Generator[None, None
             raise exc
 
 
-@app.command()
+@app.command(help="Initialize a new package")
 def init(name: str, description: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = manager.init(name, description)
-        save_package(manager, package)
+        manager.init(name, description, DEFAULT_PACKAGE_FILEPATH)
 
 
-@app.command()
+@app.command(help="Print information about the package")
 def info(
     show_deps: Annotated[bool, typer.Option("--show-deps/--hide-deps")] = False,
     show_lock: Annotated[bool, typer.Option("--show-lock/--hide-lock")] = False,
@@ -108,7 +106,7 @@ def info(
         )
 
 
-@app.command()
+@app.command(help="Lock the package dependencies")
 def lock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
@@ -119,7 +117,7 @@ def lock(info: bool = False, debug: bool = False) -> None:
         save_package(manager, package)
 
 
-@app.command()
+@app.command(help="Add a dependency to the package")
 def add(dep_name: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
@@ -130,7 +128,7 @@ def add(dep_name: str, info: bool = False, debug: bool = False) -> None:
         save_package(manager, package)
 
 
-@app.command()
+@app.command(help="Remove a dependency from the package")
 def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
@@ -140,7 +138,7 @@ def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
         save_package(manager, package)
 
 
-@app.command()
+@app.command(help="Publish the current package to the index")
 def publish(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
@@ -151,7 +149,7 @@ def publish(info: bool = False, debug: bool = False) -> None:
         save_index(manager, index)
 
 
-@app.command()
+@app.command(help="Update all dependencies to the latest compatible version")
 def update(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
@@ -161,7 +159,7 @@ def update(info: bool = False, debug: bool = False) -> None:
         save_package(manager, package)
 
 
-@app.command()
+@app.command(help="List all packages in the index")
 def index(
     show_versions: Annotated[bool, typer.Option("--show-versions/--hide-versions")] = False,
     info: bool = False,
