@@ -17,14 +17,18 @@ class Manager:
     printer: Printer
     inflect_engine: inflect.engine
 
-    def init(self, name: str, description: str) -> Package:
+    def init(self, name: str, description: str, package_filepath: Path) -> None:
         self.printer.print_message(f"Initializing package {name}...")
+        if package_filepath.exists():
+            msg = f"Package file already exists at {package_filepath.absolute()}"
+            raise UserError(msg)
+
         package = Package(
             info=PackageInfo(name=name, description=description, version=Version(major=0, minor=1)),
             members={},
         )
-        self.printer.print_success(f"Initialized {name}")
-        return package
+        self.save_package(package, package_filepath)
+        self.printer.print_success(f"Initialized {name} with package file at {package_filepath.absolute()}")
 
     def publish(self, package: Package, index: Index) -> None:
         self.printer.print_message(
@@ -73,14 +77,13 @@ class Manager:
         namespace = self._find_namespace(dep_name, index)
         latest_package = self._get_latest_package(namespace)
         version = latest_package.info.version
-        dep = Dep(name=dep_name, version=version)
-        package.info.deps[dep_name] = dep
-        self.printer.print_success(f"Added {dep_name} version {version} to {package.info.name}")
+        package.info.deps[dep_name] = Dep(name=dep_name, version=version)
+        self.printer.print_success(f"Added {dep_name}~={version.to_str()} to {package.info.name}")
 
     def remove(self, package: Package, dep_name: str) -> None:
         self.printer.print_message(f"Removing dependency {dep_name} from package {package.info.name}...")
         if dep := package.info.deps.pop(dep_name, None):
-            self.printer.print_success(f"Removed {dep_name} version {dep.version} from {package.info.name}")
+            self.printer.print_success(f"Removed {dep.name} from {package.info.name}")
         else:
             self.printer.print_success(f"{dep_name} is not a dependency of {package.info.name}")
 
