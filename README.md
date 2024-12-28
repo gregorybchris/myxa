@@ -23,17 +23,6 @@ Along with package dependencies, Myxa also tracks the type signatures of each fu
 
 For large dependencies, most of the time a breaking change only affects a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade across major version boundaries.
 
-### Unsupported features
-
-- Integration with Python code
-- Integration with PyPI
-- Support for optional params
-- Support for List, Dict, Tuple
-- Support for dev dependencies/groups/extras
-- Support for upper bounds on dependencies
-- Support for forcing a breaking change for a member without a breaking type signature
-- Support for specifying preferred indexes in the package metadata
-
 ## Installation
 
 Install using [uv](https://docs.astral.sh/uv)
@@ -44,9 +33,17 @@ uv sync
 
 ## Usage
 
+First, set an environment variable to an index.json file, which will track your published packages locally.
+
+```bash
+export MYXA_INDEX="path/to/index.json"
+```
+
+Then just use Myxa like most modern package managers!
+
 ```bash
 # Initialize a new package
-mx init
+mx init <name> "<description>"
 
 # Show package info
 mx info --show-deps --show-modules
@@ -69,6 +66,18 @@ mx update
 # Show index info
 mx index --show-versions
 ```
+
+### Unsupported features
+
+- Integration with Python code
+- Integration with PyPI
+- Support for optional params
+- Support for List, Dict, Tuple
+- Support for dev dependencies/groups/extras
+- Support for upper bounds on dependencies
+- Support for adding a dependency with a specific version
+- Support for forcing a breaking change for a member without a breaking type signature
+- Support for specifying preferred indexes in the package metadata
 
 ## Package name
 
