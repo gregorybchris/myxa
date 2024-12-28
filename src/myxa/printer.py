@@ -92,6 +92,8 @@ class Printer:
             modules_tree = Tree("Interface", style="steel_blue3")
             for node in package.members.values():
                 self._add_tree_node(node, modules_tree)
+            if not package.members:
+                modules_tree.add("\\[empty]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, modules_tree)
 
         group = Group(*group_renderables)
