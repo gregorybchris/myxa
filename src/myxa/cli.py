@@ -70,7 +70,7 @@ def save_package(manager: Manager, package: Package) -> None:
 
 
 @contextmanager
-def handle_user_error(manager: Manager, debug: bool = False) -> Generator[None, None, None]:
+def error_handler(manager: Manager, debug: bool = False) -> Generator[None, None, None]:
     try:
         yield
     except UserError as exc:
@@ -88,7 +88,7 @@ def init(
 ) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
-    with handle_user_error(manager, debug=debug):
+    with error_handler(manager, debug=debug):
         package = manager.init(name, description)
         save_package(manager, package)
 
@@ -103,7 +103,7 @@ def info(
 ) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
-    with handle_user_error(manager, debug=debug):
+    with error_handler(manager, debug=debug):
         package = load_package(manager)
         manager.printer.print_package(
             package,
@@ -120,7 +120,7 @@ def lock(
 ) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
-    with handle_user_error(manager, debug=debug):
+    with error_handler(manager, debug=debug):
         index = load_index(manager)
         package = load_package(manager)
         manager.lock(package, index)
@@ -135,7 +135,7 @@ def add(
 ) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
-    with handle_user_error(manager, debug=debug):
+    with error_handler(manager, debug=debug):
         package = load_package(manager)
         index = load_index(manager)
         manager.add(package, dep_name, index)
@@ -150,7 +150,7 @@ def remove(
 ) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
-    with handle_user_error(manager, debug=debug):
+    with error_handler(manager, debug=debug):
         package = load_package(manager)
         manager.remove(package, dep_name)
         save_package(manager, package)
@@ -163,7 +163,7 @@ def publish(
 ) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
-    with handle_user_error(manager, debug=debug):
+    with error_handler(manager, debug=debug):
         package = load_package(manager)
         index = load_index(manager)
         manager.publish(package, index)
@@ -177,7 +177,7 @@ def update(
 ) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
-    with handle_user_error(manager, debug=debug):
+    with error_handler(manager, debug=debug):
         package = load_package(manager)
         manager.update(package)
         save_package(manager, package)
@@ -191,6 +191,9 @@ def index(
 ) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
-    with handle_user_error(manager, debug=debug):
+    with error_handler(manager, debug=debug):
         index = load_index(manager)
-        manager.printer.print_index(index, show_versions=show_versions)
+        manager.printer.print_index(
+            index,
+            show_versions=show_versions,
+        )
