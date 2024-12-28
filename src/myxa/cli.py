@@ -80,12 +80,7 @@ def error_handler(manager: Manager, debug: bool = False) -> Generator[None, None
 
 
 @app.command()
-def init(
-    name: str,
-    description: str,
-    info: bool = False,
-    debug: bool = False,
-) -> None:
+def init(name: str, description: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
@@ -114,10 +109,7 @@ def info(
 
 
 @app.command()
-def lock(
-    info: bool = False,
-    debug: bool = False,
-) -> None:
+def lock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
@@ -128,11 +120,7 @@ def lock(
 
 
 @app.command()
-def add(
-    dep_name: str,
-    info: bool = False,
-    debug: bool = False,
-) -> None:
+def add(dep_name: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
@@ -143,11 +131,7 @@ def add(
 
 
 @app.command()
-def remove(
-    dep_name: str,
-    info: bool = False,
-    debug: bool = False,
-) -> None:
+def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
@@ -157,10 +141,7 @@ def remove(
 
 
 @app.command()
-def publish(
-    info: bool = False,
-    debug: bool = False,
-) -> None:
+def publish(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
@@ -171,10 +152,7 @@ def publish(
 
 
 @app.command()
-def update(
-    info: bool = False,
-    debug: bool = False,
-) -> None:
+def update(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
