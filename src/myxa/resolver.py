@@ -21,6 +21,7 @@ class Resolver:
         if not self._resolve(entry_package):
             msg = "Unable to resolve dependencies."
             raise UserError(msg)
+            # TODO: Add a test for this case
         self.resolved.pop(entry_package.info.name)
         ret = self.resolved
         self.resolved = {}
