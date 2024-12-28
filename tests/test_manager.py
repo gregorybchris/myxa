@@ -107,11 +107,13 @@ class TestManager:
         euler_package: Package,
         primary_index: Index,
     ) -> None:
-        assert euler_package.lock is None
+        # NOTE: Need to assign the lock here so type checker doesn't complain
+        lock = euler_package.lock
+        assert lock is None
         manager.lock(euler_package, primary_index)
-        # TODO: Fix typing issue here with lock being never
-        assert euler_package.lock is not None
-        assert all(dep.name in euler_package.lock.deps is not None for dep in euler_package.info.deps.values())
+        lock = euler_package.lock
+        assert lock is not None
+        assert all(dep.name in lock.deps is not None for dep in euler_package.info.deps.values())
 
     def test_save_and_load_index_from_file(
         self,
