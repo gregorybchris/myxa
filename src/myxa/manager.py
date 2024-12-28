@@ -105,7 +105,7 @@ class Manager:
 
     def load_package(self, package_filepath: Path) -> Package:
         if not package_filepath.exists():
-            msg = f"Package file not found: {package_filepath}"
+            msg = f"Package file not found at {package_filepath}"
             raise UserError(msg)
         with package_filepath.open("r") as fp:
             package_dict = json.load(fp)
@@ -117,7 +117,7 @@ class Manager:
 
     def load_index(self, index_filepath: Path) -> Index:
         if not index_filepath.exists():
-            msg = f"Index file not found: {index_filepath}"
+            msg = f"Index file not found at {index_filepath}"
             raise UserError(msg)
         with index_filepath.open("r") as fp:
             index_dict = json.load(fp)

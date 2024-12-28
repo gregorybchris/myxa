@@ -181,6 +181,16 @@ class TestManager:
         loaded_app_package = manager.load_package(package_filepath)
         assert app_package == loaded_app_package
 
+    def test_load_package_from_missing_file_raises_user_error(
+        self,
+        manager: Manager,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> None:
+        package_dirpath = tmp_path_factory.mktemp("package")
+        package_filepath = package_dirpath / "package.json"
+        with pytest.raises(UserError, match=re.escape(f"Package file not found at {package_filepath}")):
+            manager.load_package(package_filepath)
+
     def test_save_and_load_index_from_file(
         self,
         manager: Manager,
@@ -192,6 +202,16 @@ class TestManager:
         manager.save_index(primary_index, primary_index_filepath)
         loaded_primary_index = manager.load_index(primary_index_filepath)
         assert primary_index == loaded_primary_index
+
+    def test_load_index_from_missing_file_raises_user_error(
+        self,
+        manager: Manager,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> None:
+        package_dirpath = tmp_path_factory.mktemp("package")
+        primary_index_filepath = package_dirpath / "primary_index.json"
+        with pytest.raises(UserError, match=re.escape(f"Index file not found at {primary_index_filepath}")):
+            manager.load_index(primary_index_filepath)
 
     def test_ecosystem(  # noqa: PLR0913
         self,
