@@ -51,13 +51,13 @@ jobs:
       - name: Upload coverage HTML
         uses: actions/upload-artifact@v4
         with:
-          name: unit-coverage-html
+          name: coverage-html
           path: htmlcov
 
       - name: Upload coverage XML
         uses: actions/upload-artifact@v4
         with:
-          name: unit-coverage-xml
+          name: coverage-xml
           path: coverage.xml
 
       - name: Run covcheck
