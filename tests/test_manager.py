@@ -22,12 +22,27 @@ class TestManager:
     def test_init(
         self,
         manager: Manager,
+        tmp_path_factory: pytest.TempPathFactory,
     ) -> None:
-        package = manager.init("myxa", "Compatibility aware package manager")
+        package_dirpath = tmp_path_factory.mktemp("package")
+        package_filepath = package_dirpath / "package.json"
+        manager.init("myxa", "Compatibility aware package manager", package_filepath)
+        package = manager.load_package(package_filepath)
         assert package.info.name == "myxa"
         assert package.info.description == "Compatibility aware package manager"
         assert len(package.info.deps) == 0
         assert package.lock is None
+
+    def test_init_existing_package_raises_user_error(
+        self,
+        manager: Manager,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> None:
+        package_dirpath = tmp_path_factory.mktemp("package")
+        package_filepath = package_dirpath / "package.json"
+        manager.init("myxa", "Compatibility aware package manager", package_filepath)
+        with pytest.raises(UserError, match="Package file already exists at"):
+            manager.init("myxa", "Compatibility aware package manager", package_filepath)
 
     def test_print_package_without_lock_raises_user_error(
         self,
@@ -136,8 +151,8 @@ class TestManager:
         primary_index: Index,
         tmp_path_factory: pytest.TempPathFactory,
     ) -> None:
-        examples_dirpath = tmp_path_factory.mktemp("examples")
-        primary_index_filepath = examples_dirpath / "primary_index.json"
+        package_dirpath = tmp_path_factory.mktemp("package")
+        primary_index_filepath = package_dirpath / "primary_index.json"
         manager.save_index(primary_index, primary_index_filepath)
         loaded_primary_index = manager.load_index(primary_index_filepath)
         assert primary_index == loaded_primary_index
@@ -148,10 +163,10 @@ class TestManager:
         app_package: Package,
         tmp_path_factory: pytest.TempPathFactory,
     ) -> None:
-        examples_dirpath = tmp_path_factory.mktemp("examples")
-        app_package_filepath = examples_dirpath / "app.json"
-        manager.save_package(app_package, app_package_filepath)
-        loaded_app_package = manager.load_package(app_package_filepath)
+        package_dirpath = tmp_path_factory.mktemp("package")
+        package_filepath = package_dirpath / "package.json"
+        manager.save_package(app_package, package_filepath)
+        loaded_app_package = manager.load_package(package_filepath)
         assert app_package == loaded_app_package
 
     def test_end_to_end(  # noqa: PLR0913
@@ -163,12 +178,12 @@ class TestManager:
         app_package: Package,
         tmp_path_factory: pytest.TempPathFactory,
     ) -> None:
-        examples_dirpath = tmp_path_factory.mktemp("examples")
-        euler_package_filepath = examples_dirpath / "euler.json"
-        flatty_package_filepath = examples_dirpath / "flatty.json"
-        interlet_package_filepath = examples_dirpath / "interlet.json"
-        app_package_filepath = examples_dirpath / "app.json"
-        primary_index_filepath = examples_dirpath / "primary_index.json"
+        packages_dirpath = tmp_path_factory.mktemp("packages")
+        euler_package_filepath = packages_dirpath / "euler.json"
+        flatty_package_filepath = packages_dirpath / "flatty.json"
+        interlet_package_filepath = packages_dirpath / "interlet.json"
+        app_package_filepath = packages_dirpath / "app.json"
+        primary_index_filepath = packages_dirpath / "primary_index.json"
 
         primary_index = Index(name="primary")
 
