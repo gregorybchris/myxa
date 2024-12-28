@@ -23,11 +23,12 @@ class Manager:
             msg = f"Package file already exists at {package_filepath.absolute()}"
             raise UserError(msg)
 
+        default_version = Version.from_str("0.1")
         package = Package(
             info=PackageInfo(
                 name=name,
                 description=description,
-                version=Version(major=0, minor=1),
+                version=default_version,
                 deps={},
             ),
             members={},

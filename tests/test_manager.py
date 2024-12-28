@@ -175,7 +175,7 @@ class TestManager:
         interlet_package: Package,
         primary_index: Index,
     ) -> None:
-        interlet_package.info.deps["flatty"] = Dep(name="flatty", version=Version(major=2, minor=0))
+        interlet_package.info.deps["flatty"] = Dep(name="flatty", version=Version.from_str("2.0"))
         with pytest.raises(UserError, match="Dependency flatty not found in index primary"):
             manager.lock(interlet_package, primary_index)
 

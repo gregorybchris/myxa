@@ -9,7 +9,7 @@ def euler_package_fixture() -> Package:
         info=PackageInfo(
             name="euler",
             description="A compilation of useful math stuff",
-            version=Version(major=0, minor=1),
+            version=Version.from_str("0.1"),
             deps={},
         ),
         members={
@@ -68,7 +68,7 @@ def flatty_package_fixture() -> Package:
         info=PackageInfo(
             name="flatty",
             description="A package for serializing and deserializing data",
-            version=Version(major=2, minor=0),
+            version=Version.from_str("2.0"),
             deps={},
         ),
         members={
@@ -96,7 +96,7 @@ def interlet_package_fixture() -> Package:
         info=PackageInfo(
             name="interlet",
             description="A blazingly fast webserver",
-            version=Version(major=3, minor=4),
+            version=Version.from_str("3.4"),
             deps={},
         ),
         members={
@@ -126,7 +126,7 @@ def app_package_fixture() -> Package:
         info=PackageInfo(
             name="app",
             description="A fun app for doing math",
-            version=Version(major=1, minor=2),
+            version=Version.from_str("1.2"),
             deps={},
         ),
         members={
