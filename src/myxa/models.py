@@ -79,15 +79,15 @@ class Dep(BaseModel):
     version: Version
 
 
-class PackageLock(BaseModel):
-    deps: dict[str, Dep] = Field(default_factory=dict)
-
-
 class PackageInfo(BaseModel):
     name: str
     description: str
     version: Version
     deps: dict[str, Dep]
+
+
+class PackageLock(BaseModel):
+    deps: dict[str, Dep] = Field(default_factory=dict)
 
 
 class Package(BaseModel):

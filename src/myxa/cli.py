@@ -121,6 +121,16 @@ def lock(info: bool = False, debug: bool = False) -> None:
         save_package(manager, package)
 
 
+@app.command(help="Unlock the package dependencies")
+def unlock(info: bool = False, debug: bool = False) -> None:
+    set_logger_config(info, debug)
+    manager = get_manager()
+    with error_handler(manager, debug=debug):
+        package = load_package(manager)
+        manager.unlock(package)
+        save_package(manager, package)
+
+
 @app.command(help="Add a dependency to the package")
 def add(dep_name: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)

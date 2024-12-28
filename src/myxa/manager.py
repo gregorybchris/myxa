@@ -7,6 +7,7 @@ from myxa.errors import UserError
 from myxa.extra_types import Pluralizer
 from myxa.models import Dep, Index, Namespace, Package, PackageInfo, PackageLock, Version
 from myxa.printer import Printer
+from myxa.resolver import Resolver
 
 logger = logging.getLogger(__name__)
 
@@ -96,8 +97,9 @@ class Manager:
     def lock(self, package: Package, index: Index) -> None:
         self.printer.print_message(f"Locking package {package.info.name}...")
         new_lock = PackageLock()
-        # TODO: Resolve the latest compatible version of each dep
-        for dep in package.info.deps.values():
+        resolver = Resolver(index=index)
+        resolver_result = resolver.resolve(package)
+        for dep in resolver_result.values():
             if namespace := index.namespaces.get(dep.name):
                 latest_package = self._get_latest_package(namespace)
                 version = latest_package.info.version
@@ -116,8 +118,11 @@ class Manager:
         if package.lock is None:
             msg = f"No lock found for package {package.info.name}, unable to remove lock"
             raise UserError(msg)
+        n_deps = len(package.lock.deps)
         package.lock = None
-        self.printer.print_success(f"Unlocked {package.info.name}")
+        self.printer.print_success(
+            f"Unlocked {package.info.name} with {n_deps} {self.pluralizer.plural_noun('dependency', n_deps)}"
+        )
 
     def update(self, package: Package) -> None:
         raise NotImplementedError
