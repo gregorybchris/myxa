@@ -3,9 +3,8 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-import inflect
-
 from myxa.errors import UserError
+from myxa.extra_types import Pluralizer
 from myxa.models import Dep, Index, Namespace, Package, PackageInfo, PackageLock, Version
 from myxa.printer import Printer
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass(kw_only=True)
 class Manager:
     printer: Printer
-    inflect_engine: inflect.engine
+    pluralizer: Pluralizer
 
     def init(self, name: str, description: str, package_filepath: Path) -> None:
         self.printer.print_message(f"Initializing package {name}...")
@@ -109,7 +108,7 @@ class Manager:
         package.lock = new_lock
         n_deps = len(new_lock.deps)
         self.printer.print_success(
-            f"Locked {package.info.name} with {n_deps} {self.inflect_engine.plural_noun('dependency', n_deps)}"
+            f"Locked {package.info.name} with {n_deps} {self.pluralizer.plural_noun('dependency', n_deps)}"
         )
 
     def unlock(self, package: Package) -> None:

@@ -14,8 +14,8 @@ from myxa.printer import Printer
 def manager_fixture() -> Manager:
     console = Console()
     printer = Printer(console=console)
-    inflect_engine = inflect.engine()
-    return Manager(printer=printer, inflect_engine=inflect_engine)
+    pluralizer = inflect.engine()
+    return Manager(printer=printer, pluralizer=pluralizer)
 
 
 class TestManager:

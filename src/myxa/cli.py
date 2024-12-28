@@ -35,8 +35,8 @@ def set_logger_config(info: bool, debug: bool) -> None:
 
 def get_manager() -> Manager:
     printer = Printer(console=console)
-    inflect_engine = inflect.engine()
-    return Manager(printer=printer, inflect_engine=inflect_engine)
+    pluralizer = inflect.engine()
+    return Manager(printer=printer, pluralizer=pluralizer)
 
 
 def load_index_path() -> Path:
