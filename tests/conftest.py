@@ -99,7 +99,9 @@ def interlet_package_fixture() -> Package:
         members={
             "router": Mod(
                 name="router",
-                imports=[Import(path=["flatty"], member_names=["serialize", "deserialize"])],
+                imports=[
+                    Import(package_name="flatty", path=[], member_names=["serialize", "deserialize"]),
+                ],
                 members={
                     "serve": Func(
                         name="serve",
@@ -127,8 +129,8 @@ def app_package_fixture() -> Package:
             "main": Mod(
                 name="main",
                 imports=[
-                    Import(path=["euler", "math"], member_names=["add"]),
-                    Import(path=["interlet", "router"], member_names=["serve"]),
+                    Import(package_name="euler", path=["math"], member_names=["add"]),
+                    Import(package_name="interlet", path=["router"], member_names=["serve"]),
                 ],
                 members={
                     "run": Func(

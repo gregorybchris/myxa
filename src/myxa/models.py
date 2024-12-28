@@ -34,6 +34,7 @@ class Func(BaseModel):
 
 
 class Import(BaseModel):
+    package_name: str
     path: list[str]
     member_names: list[str]
 
