@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Self, Union
 
 import inflect
 from pydantic import BaseModel, Field
@@ -62,8 +62,15 @@ class Version(BaseModel):
     major: int
     minor: int
 
-    def __str__(self) -> str:
+    def to_str(self) -> str:
         return f"{self.major}.{self.minor}"
+
+    @classmethod
+    def from_str(cls, s: str) -> Self:
+        parts = s.split(".")
+        major = int(parts[0])
+        minor = int(parts[1])
+        return cls(major=major, minor=minor)
 
     def __hash__(self) -> int:
         return hash(str(self))
@@ -93,7 +100,7 @@ class Package(BaseModel):
 
 class Namespace(BaseModel):
     name: str
-    packages: dict[Version, Package] = Field(default_factory=dict)
+    packages: dict[str, Package] = Field(default_factory=dict)
 
 
 class Index(BaseModel):
@@ -144,7 +151,7 @@ class Printer:
                 msg = f"Node type not handled: {type_builtin(node)}"
                 raise InternalError(msg)
 
-    def print_package_info(self, package: Package, lock: bool = False, modules: bool = False) -> None:
+    def print_package(self, package: Package, lock: bool = False, modules: bool = False) -> None:
         info = package.info
 
         table = Table(show_header=False, border_style="black")
@@ -152,11 +159,11 @@ class Printer:
         table.add_column("", style="steel_blue1")
         table.add_row("Name", info.name)
         table.add_row("Description", info.description)
-        table.add_row("Version", str(info.version))
+        table.add_row("Version", info.version.to_str())
 
         deps_tree = Tree("Dependencies", style="steel_blue3")
         for dep in info.deps.values():
-            deps_tree.add(f"{dep.name}~={dep.version}", style="steel_blue1")
+            deps_tree.add(f"{dep.name}~={dep.version.to_str()}", style="steel_blue1")
         if not info.deps:
             deps_tree.add("\\[none]", style="steel_blue1")
 
@@ -170,7 +177,7 @@ class Printer:
 
             lock_tree = Tree("Locked dependencies", style="steel_blue3")
             for dep in package.lock.deps.values():
-                lock_tree.add(f"{dep.name}=={dep.version}", style="steel_blue1")
+                lock_tree.add(f"{dep.name}=={dep.version.to_str()}", style="steel_blue1")
             if not package.lock.deps:
                 lock_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, lock_tree)
@@ -206,15 +213,15 @@ class Manager:
         info = package.info
         if namespace := index.namespaces.get(info.name):
             # TODO: Check that if this package correctly increments major version if changes are breaking
-            if info.version in namespace.packages:
-                msg = f"Package {info.name} version {info.version} already exists in index {index.name}"
+            if info.version.to_str() in namespace.packages:
+                msg = f"Package {info.name} version {info.version.to_str()} already exists in index {index.name}"
                 raise UserError(msg)
-            namespace.packages[info.version] = package
+            namespace.packages[info.version.to_str()] = package
         else:
             namespace = Namespace(name=info.name)
-            namespace.packages[info.version] = package
+            namespace.packages[info.version.to_str()] = package
             index.namespaces[info.name] = namespace
-        self.printer.print_success(f"Published {info.name} version {info.version} to index {index.name}")
+        self.printer.print_success(f"Published {info.name} version {info.version.to_str()} to index {index.name}")
 
     def _find_namespace(self, name: str, indexes: list[Index]) -> Namespace:
         for index in indexes:
@@ -224,9 +231,9 @@ class Manager:
         raise UserError(msg)
 
     def _get_latest_package(self, namespace: Namespace) -> Package:
-        versions = list(namespace.packages.keys())
+        versions = [Version.from_str(s) for s in namespace.packages]
         latest_version = max(versions, key=lambda v: (v.major, v.minor))
-        return namespace.packages[latest_version]
+        return namespace.packages[latest_version.to_str()]
 
     def add(self, package: Package, dep_name: str, indexes: list[Index]) -> None:
         self.printer.print_message(f"Adding dependency {dep_name} to package {package.info.name}...")
@@ -241,6 +248,13 @@ class Manager:
         dep = Dep(name=dep_name, version=version)
         package.info.deps[dep_name] = dep
         self.printer.print_success(f"Added {dep_name} version {version} to {package.info.name}")
+
+    def remove(self, package: Package, dep_name: str) -> None:
+        self.printer.print_message(f"Removing dependency {dep_name} from package {package.info.name}...")
+        if dep := package.info.deps.pop(dep_name, None):
+            self.printer.print_success(f"Removed {dep_name} version {dep.version} from {package.info.name}")
+        else:
+            self.printer.print_success(f"{dep_name} is not a dependency of {package.info.name}")
 
     def _resolve(self, package: Package, indexes: list[Index]) -> None:
         pass
@@ -280,48 +294,4 @@ class Manager:
 
 
 def main(manager: Manager, printer: Printer) -> None:
-    examples_dirpath = Path(__file__).parent.parent.parent / "examples"
-    euler_package_filepath = examples_dirpath / "euler.json"
-    flatty_package_filepath = examples_dirpath / "flatty.json"
-    interlet_package_filepath = examples_dirpath / "interlet.json"
-    app_package_filepath = examples_dirpath / "app.json"
-    primary_index_filepath = examples_dirpath / "primary_index.json"
-    secondary_index_filepath = examples_dirpath / "secondary_index.json"
-
-    euler_package = manager.load_package(euler_package_filepath)
-    flatty_package = manager.load_package(flatty_package_filepath)
-    interlet_package = manager.load_package(interlet_package_filepath)
-    app_package = manager.load_package(app_package_filepath)
-
-    # primary_index = manager.load_index(primary_index_filepath)
-    # secondary_index = manager.load_index(secondary_index_filepath)
-    primary_index = Index(name="primary")
-    secondary_index = Index(name="secondary")
-    # indexes = [primary_index, secondary_index]
-
-    manager.lock(euler_package)
-    manager.publish(euler_package, primary_index)
-
-    manager.lock(flatty_package)
-    manager.publish(flatty_package, primary_index)
-
-    # manager.add(interlet_package, flatty_package.info.name, indexes)
-    manager.lock(interlet_package)
-    manager.publish(interlet_package, primary_index)
-
-    # manager.add(app_package, euler_package.info.name, indexes)
-    # manager.add(app_package, interlet_package.info.name, indexes)
-    manager.lock(app_package)
-
-    printer.print_package_info(euler_package, lock=True, modules=True)
-    printer.print_package_info(flatty_package, lock=True, modules=True)
-    printer.print_package_info(interlet_package, lock=True, modules=True)
-    printer.print_package_info(app_package, lock=True, modules=True)
-
-    manager.save_package(euler_package, euler_package_filepath)
-    manager.save_package(flatty_package, flatty_package_filepath)
-    manager.save_package(interlet_package, interlet_package_filepath)
-    manager.save_package(app_package, app_package_filepath)
-
-    manager.save_index(primary_index, primary_index_filepath)
-    manager.save_index(secondary_index, secondary_index_filepath)
+    pass

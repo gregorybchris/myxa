@@ -4,7 +4,7 @@
     "euler": {
       "name": "euler",
       "packages": {
-        "0.1": {
+        "major=0 minor=1": {
           "info": {
             "name": "euler",
             "description": "A compilation of useful math stuff",
@@ -112,7 +112,7 @@
     "flatty": {
       "name": "flatty",
       "packages": {
-        "2.0": {
+        "major=2 minor=0": {
           "info": {
             "name": "flatty",
             "description": "A package for serializing and deserializing data",
@@ -155,7 +155,7 @@
     "interlet": {
       "name": "interlet",
       "packages": {
-        "3.4": {
+        "major=3 minor=4": {
           "info": {
             "name": "interlet",
             "description": "A blazingly fast webserver",
