@@ -21,7 +21,7 @@ Myxa has two goals:
 
 Along with package dependencies, Myxa also tracks the type signatures of each function in a package. When a breaking change is detected in a type signature, `myxa publish` will require a major version bump.
 
-For large dependencies, most of the time a breaking change only affects a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade across major version boundaries.
+For large packages, most of the time breaking changes only affect a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade, even across major version boundaries.
 
 ## Installation
 
