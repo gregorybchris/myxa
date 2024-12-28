@@ -139,6 +139,22 @@ class TestManager:
         manager.publish(euler_package, primary_index)
         assert "euler" in primary_index.namespaces
 
+    def test_publish_multiple_versions(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        assert "euler" in primary_index.namespaces
+        assert "0.1" in primary_index.namespaces["euler"].packages
+        euler_package.info.version.minor += 1
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        assert "euler" in primary_index.namespaces
+        assert "0.2" in primary_index.namespaces["euler"].packages
+
     def test_lock(
         self,
         manager: Manager,
