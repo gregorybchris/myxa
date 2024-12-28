@@ -151,7 +151,13 @@ class Printer:
                 msg = f"Node type not handled: {type_builtin(node)}"
                 raise InternalError(msg)
 
-    def print_package(self, package: Package, lock: bool = False, modules: bool = False) -> None:
+    def print_package(
+        self,
+        package: Package,
+        show_deps: bool = False,
+        show_lock: bool = False,
+        show_modules: bool = False,
+    ) -> None:
         info = package.info
 
         table = Table(show_header=False, border_style="black")
@@ -161,16 +167,18 @@ class Printer:
         table.add_row("Description", info.description)
         table.add_row("Version", info.version.to_str())
 
-        deps_tree = Tree("Dependencies", style="steel_blue3")
-        for dep in info.deps.values():
-            deps_tree.add(f"{dep.name}~={dep.version.to_str()}", style="steel_blue1")
-        if not info.deps:
-            deps_tree.add("\\[none]", style="steel_blue1")
-
         padding = Padding("")
 
-        group_renderables: tuple = (table, padding, deps_tree)
-        if lock:
+        group_renderables: tuple = (table,)
+        if show_deps:
+            deps_tree = Tree("Dependencies", style="steel_blue3")
+            for dep in info.deps.values():
+                deps_tree.add(f"{dep.name}~={dep.version.to_str()}", style="steel_blue1")
+            if not info.deps:
+                deps_tree.add("\\[none]", style="steel_blue1")
+            group_renderables = (*group_renderables, padding, deps_tree)
+
+        if show_lock:
             if package.lock is None:
                 msg = f"No lock found for package {package.info.name}"
                 raise UserError(msg)
@@ -182,7 +190,7 @@ class Printer:
                 lock_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, lock_tree)
 
-        if modules:
+        if show_modules:
             modules_tree = Tree("Interface", style="steel_blue3")
             for node in package.members.values():
                 self._add_tree_node(node, modules_tree)
@@ -192,15 +200,36 @@ class Printer:
         panel = Panel(group, title=info.name, border_style="black")
         self.console.print(panel)
 
+    def print_index(self, index: Index, show_versions: bool = False) -> None:
+        tree = Tree(index.name, style="purple")
+        for namespace in index.namespaces.values():
+            namespace_tree = tree.add(namespace.name, style="steel_blue1")
+            if show_versions:
+                for package in namespace.packages.values():
+                    namespace_tree.add(f"{package.info.name}=={package.info.version.to_str()}", style="steel_blue3")
+        if not index.namespaces:
+            tree.add("\\[empty]", style="steel_blue1")
+        panel = Panel(tree, title=index.name, border_style="black")
+        self.console.print(panel)
+
 
 @dataclass(kw_only=True)
 class Manager:
     printer: Printer
     inflect_engine: inflect.engine
 
+    def init(self, name: str, description: str) -> Package:
+        self.printer.print_message(f"Initializing package {name}...")
+        package = Package(
+            info=PackageInfo(name=name, description=description, version=Version(major=0, minor=1)),
+            members={},
+        )
+        self.printer.print_success(f"Initialized {name}")
+        return package
+
     def publish(self, package: Package, index: Index) -> None:
         self.printer.print_message(
-            f"Publishing package {package.info.name} version {package.info.version} to index {index.name}..."
+            f"Publishing package {package.info.name} version {package.info.version.to_str()} to index {index.name}..."
         )
         if package.lock is None:
             msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
@@ -209,6 +238,7 @@ class Manager:
         # TODO: Check package name is valid with regex
         # TODO: Check that the version is incremented only by one (minor or major), should not skip a major or minor
         # TODO: Check that the info hasn't been updated more recently than the lock
+        # TODO: Check that all dependencies at the correct versions exist in the index being published to
 
         info = package.info
         if namespace := index.namespaces.get(info.name):
@@ -223,11 +253,10 @@ class Manager:
             index.namespaces[info.name] = namespace
         self.printer.print_success(f"Published {info.name} version {info.version.to_str()} to index {index.name}")
 
-    def _find_namespace(self, name: str, indexes: list[Index]) -> Namespace:
-        for index in indexes:
-            if namespace := index.namespaces.get(name):
-                return namespace
-        msg = f"Package {name} not found in any provided indexes: {[index.name for index in indexes]}"
+    def _find_namespace(self, name: str, index: Index) -> Namespace:
+        if namespace := index.namespaces.get(name):
+            return namespace
+        msg = f"Package {name} not found in the provided index: {index.name}"
         raise UserError(msg)
 
     def _get_latest_package(self, namespace: Namespace) -> Package:
@@ -235,14 +264,14 @@ class Manager:
         latest_version = max(versions, key=lambda v: (v.major, v.minor))
         return namespace.packages[latest_version.to_str()]
 
-    def add(self, package: Package, dep_name: str, indexes: list[Index]) -> None:
+    def add(self, package: Package, dep_name: str, index: Index) -> None:
         self.printer.print_message(f"Adding dependency {dep_name} to package {package.info.name}...")
         if package.info.deps.get(dep_name):
             msg = f"{dep_name} is already a dependency of {package.info.name}"
             raise UserError(msg)
 
         # TODO: Resolve the latest compatible version of the dep
-        namespace = self._find_namespace(dep_name, indexes)
+        namespace = self._find_namespace(dep_name, index)
         latest_package = self._get_latest_package(namespace)
         version = latest_package.info.version
         dep = Dep(name=dep_name, version=version)
@@ -256,10 +285,7 @@ class Manager:
         else:
             self.printer.print_success(f"{dep_name} is not a dependency of {package.info.name}")
 
-    def _resolve(self, package: Package, indexes: list[Index]) -> None:
-        pass
-
-    def lock(self, package: Package) -> None:
+    def lock(self, package: Package, index: Index) -> None:  # noqa: ARG002
         self.printer.print_message(f"Locking package {package.info.name}...")
         new_lock = PackageLock()
         # TODO: Resolve the latest compatible version of each dep
@@ -275,6 +301,9 @@ class Manager:
         raise NotImplementedError
 
     def load_package(self, package_filepath: Path) -> Package:
+        if not package_filepath.exists():
+            msg = f"Package file not found: {package_filepath}"
+            raise UserError(msg)
         with package_filepath.open("r") as fp:
             package_dict = json.load(fp)
         return Package(**package_dict)
@@ -284,6 +313,9 @@ class Manager:
             fp.write(package.model_dump_json(indent=2))
 
     def load_index(self, index_filepath: Path) -> Index:
+        if not index_filepath.exists():
+            msg = f"Index file not found: {index_filepath}"
+            raise UserError(msg)
         with index_filepath.open("r") as fp:
             index_dict = json.load(fp)
         return Index(**index_dict)
@@ -291,7 +323,3 @@ class Manager:
     def save_index(self, index: Index, index_filepath: Path) -> None:
         with index_filepath.open("w") as fp:
             fp.write(index.model_dump_json(indent=2))
-
-
-def main(manager: Manager, printer: Printer) -> None:
-    pass

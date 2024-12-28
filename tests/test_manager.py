@@ -16,6 +16,16 @@ def manager_fixture() -> Manager:
 
 
 class TestManager:
+    def test_init(
+        self,
+        manager: Manager,
+    ) -> None:
+        package = manager.init("myxa", "Compatibility aware package manager")
+        assert package.info.name == "myxa"
+        assert package.info.description == "Compatibility aware package manager"
+        assert len(package.info.deps) == 0
+        assert package.lock is None
+
     def test_print_package_without_lock_raises_user_error(
         self,
         manager: Manager,
@@ -39,18 +49,18 @@ class TestManager:
         euler_package: Package,
         primary_index: Index,
     ) -> None:
-        manager.lock(euler_package)
+        manager.lock(euler_package, primary_index)
         manager.publish(euler_package, primary_index)
         with pytest.raises(UserError, match="Package euler version 0.1 already exists in index primary"):
             manager.publish(euler_package, primary_index)
 
-    def test_package_not_found_in_indexes_raises_user_error(
+    def test_package_not_found_in_index_raises_user_error(
         self,
         manager: Manager,
         primary_index: Index,
     ) -> None:
-        with pytest.raises(UserError, match=re.escape("Package euler not found in any provided indexes: ['primary']")):
-            manager._find_namespace("euler", [primary_index])
+        with pytest.raises(UserError, match=re.escape("Package euler not found in the provided index: primary")):
+            manager._find_namespace("euler", primary_index)
 
     def test_add_existing_dependency_raises_user_error(
         self,
@@ -59,11 +69,11 @@ class TestManager:
         flatty_package: Package,
         primary_index: Index,
     ) -> None:
-        manager.lock(flatty_package)
+        manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
-        manager.add(interlet_package, "flatty", [primary_index])
+        manager.add(interlet_package, "flatty", primary_index)
         with pytest.raises(UserError, match="flatty is already a dependency of interlet"):
-            manager.add(interlet_package, "flatty", [primary_index])
+            manager.add(interlet_package, "flatty", primary_index)
 
     def test_add_dependency(
         self,
@@ -72,9 +82,9 @@ class TestManager:
         flatty_package: Package,
         primary_index: Index,
     ) -> None:
-        manager.lock(flatty_package)
+        manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
-        manager.add(interlet_package, "flatty", [primary_index])
+        manager.add(interlet_package, "flatty", primary_index)
         assert "flatty" in interlet_package.info.deps
 
     def test_publish_adds_package_to_index(
@@ -83,14 +93,19 @@ class TestManager:
         euler_package: Package,
         primary_index: Index,
     ) -> None:
-        manager.lock(euler_package)
+        manager.lock(euler_package, primary_index)
         assert "euler" not in primary_index.namespaces
         manager.publish(euler_package, primary_index)
         assert "euler" in primary_index.namespaces
 
-    def test_lock_updates_lock_deps(self, manager: Manager, euler_package: Package) -> None:
+    def test_lock_updates_lock_deps(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
         assert euler_package.lock is None
-        manager.lock(euler_package)
+        manager.lock(euler_package, primary_index)
         # TODO: Fix typing issue here with lock being never
         assert euler_package.lock is not None
         assert all(dep.name in euler_package.lock.deps is not None for dep in euler_package.info.deps.values())
@@ -134,25 +149,22 @@ class TestManager:
         interlet_package_filepath = examples_dirpath / "interlet.json"
         app_package_filepath = examples_dirpath / "app.json"
         primary_index_filepath = examples_dirpath / "primary_index.json"
-        secondary_index_filepath = examples_dirpath / "secondary_index.json"
 
         primary_index = Index(name="primary")
-        secondary_index = Index(name="secondary")
-        indexes = [primary_index, secondary_index]
 
-        manager.lock(euler_package)
+        manager.lock(euler_package, primary_index)
         manager.publish(euler_package, primary_index)
 
-        manager.lock(flatty_package)
+        manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
 
-        manager.add(interlet_package, flatty_package.info.name, indexes)
-        manager.lock(interlet_package)
+        manager.add(interlet_package, flatty_package.info.name, primary_index)
+        manager.lock(interlet_package, primary_index)
         manager.publish(interlet_package, primary_index)
 
-        manager.add(app_package, euler_package.info.name, indexes)
-        manager.add(app_package, interlet_package.info.name, indexes)
-        manager.lock(app_package)
+        manager.add(app_package, euler_package.info.name, primary_index)
+        manager.add(app_package, interlet_package.info.name, primary_index)
+        manager.lock(app_package, primary_index)
 
         manager.save_package(euler_package, euler_package_filepath)
         manager.save_package(flatty_package, flatty_package_filepath)
@@ -160,7 +172,4 @@ class TestManager:
         manager.save_package(app_package, app_package_filepath)
 
         manager.save_index(primary_index, primary_index_filepath)
-        manager.save_index(secondary_index, secondary_index_filepath)
-
         primary_index = manager.load_index(primary_index_filepath)
-        secondary_index = manager.load_index(secondary_index_filepath)

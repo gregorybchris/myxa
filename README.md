@@ -19,7 +19,29 @@ uv sync
 ## Usage
 
 ```bash
-uv run myxa
+# Initialize a new package
+uv run mx init
+
+# Show package info
+uv run mx info --show-deps --show-modules
+
+# Lock the package dependencies
+uv run mx lock
+
+# Add a package dependency
+uv run mx add <dep-name>
+
+# Remove a package dependency
+uv run mx remove <dep-name>
+
+# Publish to the index
+uv run mx publish
+
+# Update all package dependencies to the highest compatible versions
+uv run mx update
+
+# Show index info
+uv run mx index --show-versions
 ```
 
 ## Package name

@@ -41,7 +41,7 @@ requires = ["hatchling"]
 repository = "https://github.com/gregorybchris/myxa"
 
 [project.scripts]
-myxa = "myxa.cli:app"
+mx = "myxa.cli:app"
 
 [tool.covcheck]
 branch = 0.0
