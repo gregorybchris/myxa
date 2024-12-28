@@ -144,6 +144,11 @@ class Manager:
     def update(self, package: Package) -> None:
         raise NotImplementedError
 
+    def set_version(self, package: Package, version: Version) -> None:
+        self.printer.print_message(f"Setting version of package {package.info.name} to {version.to_str()}...")
+        package.info.version = version
+        self.printer.print_success(f"Set version of {package.info.name} to {version.to_str()}")
+
     def load_package(self, package_filepath: Path) -> Package:
         if not package_filepath.exists():
             msg = f"Package file not found at {package_filepath}"

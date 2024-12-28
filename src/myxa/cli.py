@@ -88,9 +88,9 @@ def init(name: str, description: str, info: bool = False, debug: bool = False) -
 
 @app.command(help="Print information about the package")
 def info(
-    show_deps: Annotated[bool, typer.Option("--show-deps/--hide-deps")] = False,
-    show_lock: Annotated[bool, typer.Option("--show-lock/--hide-lock")] = False,
-    show_modules: Annotated[bool, typer.Option("--show-modules/--hide-modules")] = False,
+    show_deps: Annotated[bool, typer.Option("--show-deps/--no-deps")] = True,
+    show_lock: Annotated[bool, typer.Option("--show-lock/--no-lock")] = False,
+    show_modules: Annotated[bool, typer.Option("--show-modules/--no-modules")] = True,
     info: bool = False,
     debug: bool = False,
 ) -> None:
@@ -187,7 +187,7 @@ def update(info: bool = False, debug: bool = False) -> None:
 
 @app.command(help="List all packages in the index")
 def index(
-    show_versions: Annotated[bool, typer.Option("--show-versions/--hide-versions")] = False,
+    show_versions: Annotated[bool, typer.Option("--show-versions/--no-versions")] = True,
     info: bool = False,
     debug: bool = False,
 ) -> None:
@@ -199,3 +199,14 @@ def index(
             index,
             show_versions=show_versions,
         )
+
+
+@app.command(help="Set the version of the package")
+def version(version: str, info: bool = False, debug: bool = False) -> None:
+    set_logger_config(info, debug)
+    manager = get_manager()
+    with error_handler(manager, debug=debug):
+        package = load_package(manager)
+        version_obj = Version.from_str(version)
+        manager.set_version(package, version_obj)
+        save_package(manager, package)

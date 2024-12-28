@@ -46,7 +46,7 @@ Then just use Myxa like most modern package managers!
 mx init <name> "<description>"
 
 # Show package info
-mx info --show-deps --show-modules
+mx info
 
 # Lock the package dependencies
 mx lock
@@ -64,7 +64,7 @@ mx publish
 mx update
 
 # Show index info
-mx index --show-versions
+mx index
 ```
 
 ### Unsupported features
