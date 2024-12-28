@@ -42,6 +42,7 @@ repository = "https://github.com/gregorybchris/myxa"
 
 [project.scripts]
 mx = "myxa.cli:app"
+myxa = "myxa.cli:app"
 
 [tool.covcheck]
 branch = 0.0

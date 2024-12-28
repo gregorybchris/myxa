@@ -8,6 +8,21 @@
   <hr />
 </div>
 
+## About
+
+> Note: myxa is just a toy project, not a full package manager. If you want this kind of behavior in your preferred package manager... me too :)
+
+Myxa has two goals:
+
+1. Enable package maintainers to safely publish packages without breaks
+2. Enable package users to easily upgrade to the latest versions of packages without breaks
+
+### How it works
+
+Myxa tracks not only dependencies, but also the type signatures of each function in a package. When a breaking change is detected in a type signature, `myxa publish` will require a major version bump.
+
+For large dependencies, most of the time a breaking change only affects a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will auto-upgrade across major version boundaries.
+
 ## Installation
 
 Install using [uv](https://docs.astral.sh/uv)
