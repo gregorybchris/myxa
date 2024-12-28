@@ -12,7 +12,7 @@ from typer import Typer
 
 from myxa.errors import UserError
 from myxa.manager import Manager
-from myxa.models import Index, Package
+from myxa.models import Index, Package, Version
 from myxa.printer import Printer
 
 logger = logging.getLogger(__name__)
@@ -160,6 +160,18 @@ def publish(info: bool = False, debug: bool = False) -> None:
         package = load_package(manager)
         index = load_index(manager)
         manager.publish(package, index)
+        save_index(manager, index)
+
+
+@app.command(help="Yank the current package from the index")
+def yank(version: str, info: bool = False, debug: bool = False) -> None:
+    version_obj = Version.from_str(version)
+    set_logger_config(info, debug)
+    manager = get_manager()
+    with error_handler(manager, debug=debug):
+        package = load_package(manager)
+        index = load_index(manager)
+        manager.yank(package, version_obj, index)
         save_index(manager, index)
 
 

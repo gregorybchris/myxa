@@ -107,6 +107,8 @@ class Printer:
             if show_versions:
                 for package in namespace.packages.values():
                     namespace_tree.add(f"{package.info.name}=={package.info.version.to_str()}", style="steel_blue3")
+                if not namespace.packages:
+                    namespace_tree.add("\\[none]", style="steel_blue3")
         if not index.namespaces:
             tree.add("\\[empty]", style="steel_blue1")
         panel = Panel(tree, title=index.name, border_style="black")

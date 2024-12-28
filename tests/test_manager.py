@@ -244,6 +244,43 @@ class TestManager:
         with pytest.raises(UserError, match=re.escape(f"Index file not found at {primary_index_filepath}")):
             manager.load_index(primary_index_filepath)
 
+    def test_yank(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        assert "euler" in primary_index.namespaces
+        assert len(primary_index.namespaces["euler"].packages) == 1
+        version = euler_package.info.version
+        manager.yank(euler_package, version, primary_index)
+        assert len(primary_index.namespaces["euler"].packages) == 0
+
+    def test_yank_missing_package_raises_user_error(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        version = euler_package.info.version
+        with pytest.raises(UserError, match=re.escape("Package euler not found in index primary, unable to yank")):
+            manager.yank(euler_package, version, primary_index)
+
+    def test_yank_missing_version_raises_user_error(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        version = euler_package.info.version
+        manager.yank(euler_package, version, primary_index)
+        with pytest.raises(UserError, match=re.escape("Package euler version 0.1 not found in index primary")):
+            manager.yank(euler_package, version, primary_index)
+
     def test_ecosystem(  # noqa: PLR0913
         self,
         manager: Manager,

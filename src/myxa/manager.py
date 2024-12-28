@@ -62,6 +62,23 @@ class Manager:
             index.namespaces[info.name] = namespace
         self.printer.print_success(f"Published {info.name} version {info.version.to_str()} to index {index.name}")
 
+    def yank(self, package: Package, version: Version, index: Index) -> None:
+        self.printer.print_message(f"Yanking package {package.info.name}...")
+        if namespace := index.namespaces.get(package.info.name):
+            if namespace.packages.pop(version.to_str(), None):
+                self.printer.print_success(
+                    f"Yanked {package.info.name} version {version.to_str()} from index {index.name}"
+                )
+            else:
+                msg = (
+                    f"Package {package.info.name} version {version.to_str()} "
+                    f"not found in index {index.name}, unable to yank"
+                )
+                raise UserError(msg)
+        else:
+            msg = f"Package {package.info.name} not found in index {index.name}, unable to yank"
+            raise UserError(msg)
+
     def _find_namespace(self, name: str, index: Index) -> Namespace:
         if namespace := index.namespaces.get(name):
             return namespace
