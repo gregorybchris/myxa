@@ -10,7 +10,10 @@ from rich.console import Console
 from rich.logging import RichHandler
 from typer import Typer
 
-from myxa.main import Index, Manager, Package, Printer, UserError
+from myxa.errors import UserError
+from myxa.manager import Manager
+from myxa.models import Index, Package
+from myxa.printer import Printer
 
 logger = logging.getLogger(__name__)
 

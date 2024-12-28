@@ -4,7 +4,10 @@ import inflect
 import pytest
 from rich.console import Console
 
-from myxa.main import Index, Manager, Package, Printer, UserError
+from myxa.errors import UserError
+from myxa.manager import Manager
+from myxa.models import Index, Package
+from myxa.printer import Printer
 
 
 @pytest.fixture(scope="module", name="manager")
@@ -32,7 +35,7 @@ class TestManager:
         euler_package: Package,
     ) -> None:
         with pytest.raises(UserError, match="No lock found for package euler"):
-            manager.printer.print_package(euler_package, lock=True)
+            manager.printer.print_package(euler_package, show_lock=True)
 
     def test_publish_without_lock_raises_user_error(
         self,

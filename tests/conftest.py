@@ -1,6 +1,6 @@
 import pytest
 
-from myxa.main import Const, Func, Import, Index, Mod, Package, PackageInfo, Param, Type, Version
+from myxa.models import Const, Func, Import, Index, Mod, Package, PackageInfo, Param, Type, Version
 
 
 @pytest.fixture(name="euler_package")
