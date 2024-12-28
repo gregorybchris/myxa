@@ -87,6 +87,7 @@ class TestManager:
     ) -> None:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
+        assert "flatty" not in interlet_package.info.deps
         manager.add(interlet_package, "flatty", primary_index)
         assert "flatty" in interlet_package.info.deps
 
