@@ -78,7 +78,7 @@ class TestManager:
         with pytest.raises(UserError, match="flatty is already a dependency of interlet"):
             manager.add(interlet_package, "flatty", primary_index)
 
-    def test_add_dependency(
+    def test_add(
         self,
         manager: Manager,
         interlet_package: Package,
@@ -89,6 +89,20 @@ class TestManager:
         manager.publish(flatty_package, primary_index)
         manager.add(interlet_package, "flatty", primary_index)
         assert "flatty" in interlet_package.info.deps
+
+    def test_remove(
+        self,
+        manager: Manager,
+        interlet_package: Package,
+        flatty_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index)
+        manager.add(interlet_package, "flatty", primary_index)
+        assert "flatty" in interlet_package.info.deps
+        manager.remove(interlet_package, "flatty")
+        assert "flatty" not in interlet_package.info.deps
 
     def test_publish_adds_package_to_index(
         self,
