@@ -85,7 +85,8 @@ class Manager:
         if dep := package.info.deps.pop(dep_name, None):
             self.printer.print_success(f"Removed {dep.name} from {package.info.name}")
         else:
-            self.printer.print_success(f"{dep_name} is not a dependency of {package.info.name}")
+            msg = f"{dep_name} is not a dependency of {package.info.name}, unable to remove it"
+            raise UserError(msg)
 
     def lock(self, package: Package, index: Index) -> None:  # noqa: ARG002
         self.printer.print_message(f"Locking package {package.info.name}...")

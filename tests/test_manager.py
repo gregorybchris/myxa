@@ -33,7 +33,7 @@ class TestManager:
         assert len(package.info.deps) == 0
         assert package.lock is None
 
-    def test_init_existing_package_raises_user_error(
+    def test_init_package_twice_raises_user_error(
         self,
         manager: Manager,
         tmp_path_factory: pytest.TempPathFactory,
@@ -80,19 +80,6 @@ class TestManager:
         with pytest.raises(UserError, match=re.escape("Package euler not found in the provided index: primary")):
             manager._find_namespace("euler", primary_index)
 
-    def test_add_existing_dependency_raises_user_error(
-        self,
-        manager: Manager,
-        interlet_package: Package,
-        flatty_package: Package,
-        primary_index: Index,
-    ) -> None:
-        manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
-        manager.add(interlet_package, "flatty", primary_index)
-        with pytest.raises(UserError, match="flatty is already a dependency of interlet"):
-            manager.add(interlet_package, "flatty", primary_index)
-
     def test_add(
         self,
         manager: Manager,
@@ -105,6 +92,19 @@ class TestManager:
         assert "flatty" not in interlet_package.info.deps
         manager.add(interlet_package, "flatty", primary_index)
         assert "flatty" in interlet_package.info.deps
+
+    def test_add_dependency_twice_raises_user_error(
+        self,
+        manager: Manager,
+        interlet_package: Package,
+        flatty_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index)
+        manager.add(interlet_package, "flatty", primary_index)
+        with pytest.raises(UserError, match="flatty is already a dependency of interlet"):
+            manager.add(interlet_package, "flatty", primary_index)
 
     def test_remove(
         self,
@@ -120,7 +120,15 @@ class TestManager:
         manager.remove(interlet_package, "flatty")
         assert "flatty" not in interlet_package.info.deps
 
-    def test_publish_adds_package_to_index(
+    def test_remove_missing_dependency_raises_user_error(
+        self,
+        manager: Manager,
+        interlet_package: Package,
+    ) -> None:
+        with pytest.raises(UserError, match="flatty is not a dependency of interlet, unable to remove it"):
+            manager.remove(interlet_package, "flatty")
+
+    def test_publish(
         self,
         manager: Manager,
         euler_package: Package,
@@ -131,7 +139,7 @@ class TestManager:
         manager.publish(euler_package, primary_index)
         assert "euler" in primary_index.namespaces
 
-    def test_lock_updates_lock_deps(
+    def test_lock(
         self,
         manager: Manager,
         euler_package: Package,
@@ -145,18 +153,6 @@ class TestManager:
         assert lock is not None
         assert all(dep.name in lock.deps is not None for dep in euler_package.info.deps.values())
 
-    def test_save_and_load_index_from_file(
-        self,
-        manager: Manager,
-        primary_index: Index,
-        tmp_path_factory: pytest.TempPathFactory,
-    ) -> None:
-        package_dirpath = tmp_path_factory.mktemp("package")
-        primary_index_filepath = package_dirpath / "primary_index.json"
-        manager.save_index(primary_index, primary_index_filepath)
-        loaded_primary_index = manager.load_index(primary_index_filepath)
-        assert primary_index == loaded_primary_index
-
     def test_save_and_load_package_from_file(
         self,
         manager: Manager,
@@ -169,7 +165,19 @@ class TestManager:
         loaded_app_package = manager.load_package(package_filepath)
         assert app_package == loaded_app_package
 
-    def test_end_to_end(  # noqa: PLR0913
+    def test_save_and_load_index_from_file(
+        self,
+        manager: Manager,
+        primary_index: Index,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> None:
+        package_dirpath = tmp_path_factory.mktemp("package")
+        primary_index_filepath = package_dirpath / "primary_index.json"
+        manager.save_index(primary_index, primary_index_filepath)
+        loaded_primary_index = manager.load_index(primary_index_filepath)
+        assert primary_index == loaded_primary_index
+
+    def test_ecosystem(  # noqa: PLR0913
         self,
         manager: Manager,
         euler_package: Package,
