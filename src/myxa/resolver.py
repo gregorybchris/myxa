@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Iterator, Optional
 
 from myxa.errors import UserError
-from myxa.models import Dep, Index, Package, Version
+from myxa.models import Dep, Index, Namespace, Package, Version
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +27,34 @@ class Resolver:
         self.resolved = {}
         return ret
 
-    def iter_package_versions(self, package_name: str) -> Iterator[Version]:
+    def get_namespace(self, package_name: str) -> Namespace:
+        if namespace := self.index.namespaces.get(package_name):
+            return namespace
+        msg = f"{package_name} not found in index {self.index.name}"
+        raise UserError(msg)
+
+    def iter_namespace(self, package_name: str) -> Iterator[Package]:
+        namespace = self.get_namespace(package_name)
+        yield from namespace.packages.values()
+
+    def iter_versions(self, package_name: str) -> Iterator[Version]:
+        for package in self.iter_namespace(package_name):
+            yield package.info.version
+
+    def get_package(self, package_name: str, version: Version) -> Package:
+        namespace = self.get_namespace(package_name)
+        if package := namespace.packages.get(version.to_str()):
+            return package
+        msg = f"{package_name} version {version.to_str()} not found in index {self.index.name}"
+        raise UserError(msg)
+
+    def iter_package_versions(self, package: Package) -> Iterator[Version]:
         # Avoid looking up entry package in index
-        if self.entry_package is not None and package_name == self.entry_package.info.name:
+        if self.entry_package is not None and package.info.name == self.entry_package.info.name:
             yield self.entry_package.info.version
             return
 
-        package_versions = (Version.from_str(s) for s in self.index.namespaces[package_name].packages)
+        package_versions = (Version.from_str(s) for s in self.index.namespaces[package.info.name].packages)
         # Try highest version first
         for version in sorted(package_versions, reverse=True):
             yield version
@@ -48,7 +69,7 @@ class Resolver:
             return False  # Cycle detected
         self.seen.add(package_name)
 
-        for version in self.iter_package_versions(package_name):
+        for version in self.iter_package_versions(package):
             self.resolved[package_name] = Dep(name=package_name, version=version)
             logger.debug("Trying %s version %s", package_name, version.to_str())
 
