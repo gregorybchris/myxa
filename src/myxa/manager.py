@@ -64,7 +64,7 @@ class Manager:
 
     def _get_latest_package(self, namespace: Namespace) -> Package:
         versions = [Version.from_str(s) for s in namespace.packages]
-        latest_version = max(versions, key=lambda v: (v.major, v.minor))
+        latest_version = max(versions)
         return namespace.packages[latest_version.to_str()]
 
     def add(self, package: Package, dep_name: str, index: Index) -> None:

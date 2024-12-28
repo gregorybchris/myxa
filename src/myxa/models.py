@@ -65,6 +65,13 @@ class Version(BaseModel):
     def __hash__(self) -> int:
         return hash(str(self))
 
+    def __lt__(self, other: Self) -> bool:
+        if self.major < other.major:
+            return True
+        if self.major == other.major:
+            return self.minor < other.minor
+        return False
+
 
 class Dep(BaseModel):
     name: str
