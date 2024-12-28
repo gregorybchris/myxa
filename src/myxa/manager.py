@@ -24,7 +24,12 @@ class Manager:
             raise UserError(msg)
 
         package = Package(
-            info=PackageInfo(name=name, description=description, version=Version(major=0, minor=1)),
+            info=PackageInfo(
+                name=name,
+                description=description,
+                version=Version(major=0, minor=1),
+                deps={},
+            ),
             members={},
         )
         self.save_package(package, package_filepath)
@@ -88,17 +93,31 @@ class Manager:
             msg = f"{dep_name} is not a dependency of {package.info.name}, unable to remove it"
             raise UserError(msg)
 
-    def lock(self, package: Package, index: Index) -> None:  # noqa: ARG002
+    def lock(self, package: Package, index: Index) -> None:
         self.printer.print_message(f"Locking package {package.info.name}...")
         new_lock = PackageLock()
         # TODO: Resolve the latest compatible version of each dep
         for dep in package.info.deps.values():
-            new_lock.deps[dep.name] = dep
+            if namespace := index.namespaces.get(dep.name):
+                latest_package = self._get_latest_package(namespace)
+                version = latest_package.info.version
+                new_lock.deps[dep.name] = Dep(name=dep.name, version=version)
+            else:
+                msg = f"Dependency {dep.name} not found in index {index.name}"
+                raise UserError(msg)
         package.lock = new_lock
         n_deps = len(new_lock.deps)
         self.printer.print_success(
             f"Locked {package.info.name} with {n_deps} {self.inflect_engine.plural_noun('dependency', n_deps)}"
         )
+
+    def unlock(self, package: Package) -> None:
+        self.printer.print_message(f"Unlocking package {package.info.name}...")
+        if package.lock is None:
+            msg = f"No lock found for package {package.info.name}, unable to remove lock"
+            raise UserError(msg)
+        package.lock = None
+        self.printer.print_success(f"Unlocked {package.info.name}")
 
     def update(self, package: Package) -> None:
         raise NotImplementedError

@@ -10,6 +10,7 @@ def euler_package_fixture() -> Package:
             name="euler",
             description="A compilation of useful math stuff",
             version=Version(major=0, minor=1),
+            deps={},
         ),
         members={
             "math": Mod(
@@ -68,6 +69,7 @@ def flatty_package_fixture() -> Package:
             name="flatty",
             description="A package for serializing and deserializing data",
             version=Version(major=2, minor=0),
+            deps={},
         ),
         members={
             "serialize": Func(
@@ -95,6 +97,7 @@ def interlet_package_fixture() -> Package:
             name="interlet",
             description="A blazingly fast webserver",
             version=Version(major=3, minor=4),
+            deps={},
         ),
         members={
             "router": Mod(
@@ -124,6 +127,7 @@ def app_package_fixture() -> Package:
             name="app",
             description="A fun app for doing math",
             version=Version(major=1, minor=2),
+            deps={},
         ),
         members={
             "main": Mod(

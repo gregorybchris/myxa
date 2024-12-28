@@ -87,7 +87,7 @@ class PackageInfo(BaseModel):
     name: str
     description: str
     version: Version
-    deps: dict[str, Dep] = Field(default_factory=dict)
+    deps: dict[str, Dep]
 
 
 class Package(BaseModel):

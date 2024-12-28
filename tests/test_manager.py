@@ -6,7 +6,7 @@ from rich.console import Console
 
 from myxa.errors import UserError
 from myxa.manager import Manager
-from myxa.models import Index, Package
+from myxa.models import Dep, Index, Package, Version
 from myxa.printer import Printer
 
 
@@ -93,7 +93,7 @@ class TestManager:
         manager.add(interlet_package, "flatty", primary_index)
         assert "flatty" in interlet_package.info.deps
 
-    def test_add_dependency_twice_raises_user_error(
+    def test_add_dep_twice_raises_user_error(
         self,
         manager: Manager,
         interlet_package: Package,
@@ -120,7 +120,7 @@ class TestManager:
         manager.remove(interlet_package, "flatty")
         assert "flatty" not in interlet_package.info.deps
 
-    def test_remove_missing_dependency_raises_user_error(
+    def test_remove_missing_dep_raises_user_error(
         self,
         manager: Manager,
         interlet_package: Package,
@@ -168,6 +168,37 @@ class TestManager:
         lock = euler_package.lock
         assert lock is not None
         assert all(dep.name in lock.deps is not None for dep in euler_package.info.deps.values())
+
+    def test_lock_dep_not_in_index_raises_user_error(
+        self,
+        manager: Manager,
+        interlet_package: Package,
+        primary_index: Index,
+    ) -> None:
+        interlet_package.info.deps["flatty"] = Dep(name="flatty", version=Version(major=2, minor=0))
+        with pytest.raises(UserError, match="Dependency flatty not found in index primary"):
+            manager.lock(interlet_package, primary_index)
+
+    def test_unlock(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        lock = euler_package.lock
+        assert lock is not None
+        manager.unlock(euler_package)
+        lock = euler_package.lock
+        assert lock is None
+
+    def test_unlock_without_lock_raises_user_error(
+        self,
+        manager: Manager,
+        euler_package: Package,
+    ) -> None:
+        with pytest.raises(UserError, match="No lock found for package euler, unable to remove lock"):
+            manager.unlock(euler_package)
 
     def test_save_and_load_package_from_file(
         self,
