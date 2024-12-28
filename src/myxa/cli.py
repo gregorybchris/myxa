@@ -106,6 +106,10 @@ def info(
         )
 
 
+# show alias for the info command
+app.command(name="show")(info)
+
+
 @app.command(help="Lock the package dependencies")
 def lock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
