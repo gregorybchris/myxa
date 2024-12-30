@@ -48,9 +48,6 @@ mx init <name> "<description>"
 # Show package info
 mx info
 
-# Lock the package dependencies
-mx lock
-
 # Add a package dependency
 mx add <dep-name>
 
@@ -60,14 +57,17 @@ mx add <dep-name> --version 1.0
 # Remove a package dependency
 mx remove <dep-name>
 
+# Lock the package dependencies
+mx lock
+
+# Update all package dependencies to the highest compatible versions
+mx update
+
 # Check whether there are breaking changes
 mx check
 
 # Publish to the index
 mx publish
-
-# Update all package dependencies to the highest compatible versions
-mx update
 
 # Show index info
 mx index

@@ -92,27 +92,6 @@ def info(
 app.command(name="show")(info)
 
 
-@app.command(help="Lock the package dependencies")
-def lock(info: bool = False, debug: bool = False) -> None:
-    set_logger_config(info, debug)
-    manager = Manager()
-    with error_handler(manager, debug=debug):
-        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
-        index = load_index(manager)
-        manager.lock(package, index)
-        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
-
-
-@app.command(help="Unlock the package dependencies")
-def unlock(info: bool = False, debug: bool = False) -> None:
-    set_logger_config(info, debug)
-    manager = Manager()
-    with error_handler(manager, debug=debug):
-        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
-        manager.unlock(package)
-        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
-
-
 @app.command(help="Add a dependency to the package")
 def add(dep_name: str, version: Optional[str] = None, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
@@ -135,15 +114,36 @@ def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
         manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
-@app.command(help="Publish the current package to the index")
-def publish(info: bool = False, debug: bool = False) -> None:
+@app.command(help="Lock the package dependencies")
+def lock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
-        manager.publish(package, index)
-        save_index(manager, index)
+        manager.lock(package, index)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
+
+
+@app.command(help="Unlock the package dependencies")
+def unlock(info: bool = False, debug: bool = False) -> None:
+    set_logger_config(info, debug)
+    manager = Manager()
+    with error_handler(manager, debug=debug):
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
+        manager.unlock(package)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
+
+
+@app.command(help="Update all dependencies to the latest compatible version")
+def update(info: bool = False, debug: bool = False) -> None:
+    set_logger_config(info, debug)
+    manager = Manager()
+    with error_handler(manager, debug=debug):
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
+        index = load_index(manager)
+        manager.update(package, index)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @app.command(help="Check if there are breaking changes")
@@ -157,6 +157,17 @@ def check(info: bool = False, debug: bool = False) -> None:
         manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
+@app.command(help="Publish the current package to the index")
+def publish(info: bool = False, debug: bool = False) -> None:
+    set_logger_config(info, debug)
+    manager = Manager()
+    with error_handler(manager, debug=debug):
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
+        index = load_index(manager)
+        manager.publish(package, index)
+        save_index(manager, index)
+
+
 @app.command(help="Yank the current package from the index")
 def yank(version: str, info: bool = False, debug: bool = False) -> None:
     version_obj = Version.from_str(version)
@@ -167,17 +178,6 @@ def yank(version: str, info: bool = False, debug: bool = False) -> None:
         index = load_index(manager)
         manager.yank(package, version_obj, index)
         save_index(manager, index)
-
-
-@app.command(help="Update all dependencies to the latest compatible version")
-def update(info: bool = False, debug: bool = False) -> None:
-    set_logger_config(info, debug)
-    manager = Manager()
-    with error_handler(manager, debug=debug):
-        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
-        index = load_index(manager)
-        manager.update(package, index)
-        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @app.command(help="List all packages in the index")

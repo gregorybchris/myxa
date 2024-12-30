@@ -39,32 +39,6 @@ class Manager:
         self.save_package(package, package_filepath)
         self.printer.print_success(f"Initialized {name} with package file at {package_filepath.absolute()}")
 
-    def publish(self, package: Package, index: Index) -> None:
-        version_str = package.info.version.to_str()
-        self.printer.print_message(
-            f"Publishing package {package.info.name} version {version_str} to index {index.name}..."
-        )
-        if package.lock is None:
-            msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
-            raise UserError(msg)
-
-        # TODO: Check package name is valid with regex
-        # TODO: Auto update the version for the user to the next minor or major version based on breaking changes
-        # TODO: Check that the version is incremented only by one (minor or major), should not skip a major or minor
-        # TODO: Check that the info hasn't been updated more recently than the lock
-        # TODO: Check that all dependencies at the correct versions exist in the index being published to
-        index.add_package(package)
-
-        self.printer.print_success(f"Published {package.info.name} version {version_str} to index {index.name}")
-
-    def check(self, package: Package, index: Index) -> None:
-        raise NotImplementedError
-
-    def yank(self, package: Package, version: Version, index: Index) -> None:
-        self.printer.print_message(f"Yanking package {package.info.name}...")
-        index.remove_package(package, version)
-        self.printer.print_success(f"Yanked {package.info.name} version {version.to_str()} from index {index.name}")
-
     def add(self, package: Package, dep_name: str, index: Index, version: Optional[Version] = None) -> None:
         self.printer.print_message(f"Adding dependency {dep_name} to package {package.info.name}...")
         if package.info.deps.get(dep_name) and (version is None or package.info.deps[dep_name].version == version):
@@ -117,6 +91,32 @@ class Manager:
         resolver = Resolver(index=index)
         package.lock = resolver.resolve(package)
         self.printer.print_lock_diff(original_lock, package.lock)
+
+    def check(self, package: Package, index: Index) -> None:
+        raise NotImplementedError
+
+    def publish(self, package: Package, index: Index) -> None:
+        version_str = package.info.version.to_str()
+        self.printer.print_message(
+            f"Publishing package {package.info.name} version {version_str} to index {index.name}..."
+        )
+        if package.lock is None:
+            msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
+            raise UserError(msg)
+
+        # TODO: Check package name is valid with regex
+        # TODO: Auto update the version for the user to the next minor or major version based on breaking changes
+        # TODO: Check that the version is incremented only by one (minor or major), should not skip a major or minor
+        # TODO: Check that the info hasn't been updated more recently than the lock
+        # TODO: Check that all dependencies at the correct versions exist in the index being published to
+        index.add_package(package)
+
+        self.printer.print_success(f"Published {package.info.name} version {version_str} to index {index.name}")
+
+    def yank(self, package: Package, version: Version, index: Index) -> None:
+        self.printer.print_message(f"Yanking package {package.info.name}...")
+        index.remove_package(package, version)
+        self.printer.print_success(f"Yanked {package.info.name} version {version.to_str()} from index {index.name}")
 
     def set_version(self, package: Package, version: Version) -> None:
         self.printer.print_message(f"Setting version of package {package.info.name} to {version.to_str()}...")
