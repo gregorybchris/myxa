@@ -16,17 +16,14 @@
   "ruff.configuration": "pyproject.toml",
   "ruff.nativeServer": true,
   "cSpell.words": [
-    "defn",
-    "flatty",
-    "interlet",
     "myxa",
     "Myxogastria",
+    "typer",
+    "flatty",
+    "interlet",
     "Pluralizer",
     "renderable",
     "renderables",
-    "rprint",
-    "subdep",
-    "typer",
     "verstr"
   ]
 }
