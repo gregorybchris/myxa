@@ -10,7 +10,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
-from myxa.checker import CompatBreak, NodeTypeChange, Removal, TypeChange
+from myxa.checker import CompatBreak, NodeChange, Removal, TypeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
 from myxa.models import Const, Func, Index, Mod, Node, Package, PackageLock, get_node_str
@@ -167,7 +167,7 @@ class Printer:
                     f"[black]-[steel_blue3] The type of {node_str} [steel_blue1]'{name}'[steel_blue3] has changed from"
                     f" [sandy_brown]{old_type}[steel_blue3] to [sandy_brown]{new_type}[steel_blue3]"
                 )
-            case NodeTypeChange(old_node=old_node, new_node=new_node, path=path):
+            case NodeChange(old_node=old_node, new_node=new_node, path=path):
                 name = ".".join(path)
                 old_node_str = get_node_str(old_node)
                 new_node_str = get_node_str(new_node)

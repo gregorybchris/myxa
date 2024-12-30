@@ -28,7 +28,7 @@ class TypeChange(CompatBreak):
     path: Path
 
 
-class NodeTypeChange(CompatBreak):
+class NodeChange(CompatBreak):
     old_node: Node
     new_node: Node
     path: Path
@@ -60,7 +60,7 @@ class Checker:
             case (Const() as const_old, Const() as const_new):
                 yield from self._check_const(const_old, const_new, path)
             case _:
-                yield NodeTypeChange(old_node=node_old, new_node=node_new, path=path)
+                yield NodeChange(old_node=node_old, new_node=node_new, path=path)
 
     def _check_mod(self, mod_old: Mod, mod_new: Mod, path: Path) -> Iterator[CompatBreak]:
         for member_name, member_old in mod_old.members.items():

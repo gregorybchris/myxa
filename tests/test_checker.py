@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 
-from myxa.checker import Checker, NodeTypeChange, Removal, TypeChange
+from myxa.checker import Checker, NodeChange, Removal, TypeChange
 from myxa.errors import InternalError
 from myxa.models import Const, Func, Package, Param, Type
 
@@ -40,7 +40,7 @@ class TestChecker:
 
         compat_breaks = checker.check(euler_package, euler_package_new)
         assert len(compat_breaks) == 1
-        assert isinstance(compat_breaks[0], NodeTypeChange)
+        assert isinstance(compat_breaks[0], NodeChange)
         assert isinstance(compat_breaks[0].old_node, Func)
         assert isinstance(compat_breaks[0].new_node, Const)
         assert compat_breaks[0].path == ["euler", "math", "add"]
