@@ -52,9 +52,9 @@ class Printer:
     def print_package(
         self,
         package: Package,
-        show_deps: bool = False,
-        show_lock: bool = False,
-        show_modules: bool = False,
+        show_deps: bool = True,
+        show_lock: bool = True,
+        show_modules: bool = True,
     ) -> None:
         info = package.info
 
@@ -96,7 +96,7 @@ class Printer:
         panel = Panel(group, title=info.name, border_style="black")
         self.console.print(panel)
 
-    def print_index(self, index: Index, show_versions: bool = False) -> None:
+    def print_index(self, index: Index, show_versions: bool = True) -> None:
         tree = Tree(index.name, style="purple")
         for namespace in index.namespaces.values():
             namespace_tree = tree.add(namespace.name, style="steel_blue1")

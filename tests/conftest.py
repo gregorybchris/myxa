@@ -1,6 +1,8 @@
 import pytest
 
+from myxa.manager import Manager
 from myxa.models import Const, Func, Import, Index, Mod, Package, PackageInfo, Param, Type, Version
+from myxa.resolver import Resolver
 
 
 @pytest.fixture(name="euler_package")
@@ -151,3 +153,13 @@ def app_package_fixture() -> Package:
 @pytest.fixture(name="primary_index")
 def primary_index_fixture() -> Index:
     return Index(name="primary")
+
+
+@pytest.fixture(name="manager", scope="module")
+def manager_fixture() -> Manager:
+    return Manager()
+
+
+@pytest.fixture(name="resolver")
+def resolver_fixture(primary_index: Index) -> Resolver:
+    return Resolver(index=primary_index)

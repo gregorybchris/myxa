@@ -8,7 +8,7 @@ import inflect
 
 from myxa.errors import UserError
 from myxa.extra_types import Pluralizer
-from myxa.models import Dep, Index, Namespace, Package, PackageInfo, Version
+from myxa.models import Dep, Index, Package, PackageInfo, Version
 from myxa.printer import Printer
 from myxa.resolver import Resolver
 
@@ -40,30 +40,22 @@ class Manager:
         self.printer.print_success(f"Initialized {name} with package file at {package_filepath.absolute()}")
 
     def publish(self, package: Package, index: Index) -> None:
+        version_str = package.info.version.to_str()
         self.printer.print_message(
-            f"Publishing package {package.info.name} version {package.info.version.to_str()} to index {index.name}..."
+            f"Publishing package {package.info.name} version {version_str} to index {index.name}..."
         )
         if package.lock is None:
             msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
             raise UserError(msg)
 
         # TODO: Check package name is valid with regex
+        # TODO: Auto update the version for the user to the next minor or major version based on breaking changes
         # TODO: Check that the version is incremented only by one (minor or major), should not skip a major or minor
         # TODO: Check that the info hasn't been updated more recently than the lock
         # TODO: Check that all dependencies at the correct versions exist in the index being published to
+        index.add_package(package)
 
-        info = package.info
-        if namespace := index.namespaces.get(info.name):
-            # TODO: Check that if this package correctly increments major version if changes are breaking
-            if info.version.to_str() in namespace.packages:
-                msg = f"Package {info.name} version {info.version.to_str()} already exists in index {index.name}"
-                raise UserError(msg)
-            namespace.packages[info.version.to_str()] = package
-        else:
-            namespace = Namespace(name=info.name)
-            namespace.packages[info.version.to_str()] = package
-            index.namespaces[info.name] = namespace
-        self.printer.print_success(f"Published {info.name} version {info.version.to_str()} to index {index.name}")
+        self.printer.print_success(f"Published {package.info.name} version {version_str} to index {index.name}")
 
     def check(self, package: Package, index: Index) -> None:
         raise NotImplementedError
@@ -77,8 +69,8 @@ class Manager:
                 )
             else:
                 msg = (
-                    f"Package {package.info.name} version {version.to_str()} "
-                    f"not found in index {index.name}, unable to yank"
+                    f"Package {package.info.name} version {version.to_str()}"
+                    f" not found in index {index.name}, unable to yank"
                 )
                 raise UserError(msg)
         else:

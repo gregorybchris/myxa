@@ -7,11 +7,6 @@ from myxa.manager import Manager
 from myxa.models import Dep, Index, Package, Version
 
 
-@pytest.fixture(scope="module", name="manager")
-def manager_fixture() -> Manager:
-    return Manager()
-
-
 class TestManager:
     def test_init(
         self,
@@ -55,7 +50,7 @@ class TestManager:
     ) -> None:
         manager.lock(euler_package, primary_index)
         manager.publish(euler_package, primary_index)
-        with pytest.raises(UserError, match="Package euler version 0.1 already exists in index primary"):
+        with pytest.raises(UserError, match="Package euler==0.1 already exists in provided index: primary"):
             manager.publish(euler_package, primary_index)
 
     def test_add(

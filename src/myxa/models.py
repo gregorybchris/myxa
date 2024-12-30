@@ -1,5 +1,6 @@
 import logging
 import re
+from copy import deepcopy
 from enum import StrEnum
 from typing import Literal, Optional, Self, Union
 
@@ -79,6 +80,12 @@ class Version(BaseModel):
             return self.minor < other.minor
         return False
 
+    def next_minor(self) -> "Version":
+        return Version(major=self.major, minor=self.minor + 1)
+
+    def next_major(self) -> "Version":
+        return Version(major=self.major + 1, minor=0)
+
 
 class Dep(BaseModel):
     name: str
@@ -110,6 +117,19 @@ class Namespace(BaseModel):
 class Index(BaseModel):
     name: str
     namespaces: dict[str, Namespace] = Field(default_factory=dict)
+
+    def add_package(self, package: Package) -> None:
+        package = deepcopy(package)
+        version_str = package.info.version.to_str()
+        if namespace := self.namespaces.get(package.info.name):
+            if version_str in namespace.packages:
+                msg = f"Package {package.info.name}=={version_str} already exists in provided index: {self.name}"
+                raise UserError(msg)
+            namespace.packages[version_str] = package
+        else:
+            namespace = Namespace(name=package.info.name)
+            namespace.packages[version_str] = package
+            self.namespaces[package.info.name] = namespace
 
     def get_namespace(self, package_name: str) -> Namespace:
         if namespace := self.namespaces.get(package_name):
