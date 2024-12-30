@@ -12,7 +12,7 @@ from typer import Typer
 
 from myxa.errors import UserError
 from myxa.manager import Manager
-from myxa.models import Index, Package, Version
+from myxa.models import Index, Version
 from myxa.printer import Printer
 
 logger = logging.getLogger(__name__)
@@ -60,14 +60,6 @@ def save_index(manager: Manager, index: Index) -> None:
     manager.save_index(index, index_filepath)
 
 
-def load_package(manager: Manager) -> Package:
-    return manager.load_package(DEFAULT_PACKAGE_FILEPATH)
-
-
-def save_package(manager: Manager, package: Package) -> None:
-    manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
-
-
 @contextmanager
 def error_handler(manager: Manager, debug: bool = False) -> Generator[None, None, None]:
     try:
@@ -97,7 +89,7 @@ def info(
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.printer.print_package(
             package,
             show_deps=show_deps,
@@ -116,9 +108,9 @@ def lock(info: bool = False, debug: bool = False) -> None:
     manager = get_manager()
     with error_handler(manager, debug=debug):
         index = load_index(manager)
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.lock(package, index)
-        save_package(manager, package)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @app.command(help="Unlock the package dependencies")
@@ -126,9 +118,9 @@ def unlock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.unlock(package)
-        save_package(manager, package)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @app.command(help="Add a dependency to the package")
@@ -136,11 +128,11 @@ def add(dep_name: str, version: Optional[str] = None, info: bool = False, debug:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
         version_obj = Version.from_str(version) if version else None
         manager.add(package, dep_name, index, version=version_obj)
-        save_package(manager, package)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @app.command(help="Remove a dependency from the package")
@@ -148,9 +140,9 @@ def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.remove(package, dep_name)
-        save_package(manager, package)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @app.command(help="Publish the current package to the index")
@@ -158,7 +150,7 @@ def publish(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
         manager.publish(package, index)
         save_index(manager, index)
@@ -169,10 +161,10 @@ def check(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
         manager.check(package, index)
-        save_package(manager, package)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @app.command(help="Yank the current package from the index")
@@ -181,7 +173,7 @@ def yank(version: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
         manager.yank(package, version_obj, index)
         save_index(manager, index)
@@ -192,9 +184,9 @@ def update(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.update(package)
-        save_package(manager, package)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
 @app.command(help="List all packages in the index")
@@ -218,7 +210,7 @@ def version(version: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
-        package = load_package(manager)
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         version_obj = Version.from_str(version)
         manager.set_version(package, version_obj)
-        save_package(manager, package)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
