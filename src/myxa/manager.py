@@ -103,7 +103,13 @@ class Manager:
         else:
             self.printer.print_success("No compatibility breaks found")
 
-    def publish(self, package: Package, index: Index, interactive: bool = True, major: bool = False) -> None:
+    def publish(  # noqa: PLR0912
+        self,
+        package: Package,
+        index: Index,
+        interactive: bool = True,
+        major: bool = False,
+    ) -> None:
         self.printer.print_message(f"Publishing package {package.info.name} to index {index.name}...")
         if package.lock is None:
             msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
