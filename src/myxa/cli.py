@@ -89,7 +89,7 @@ def info(
 
 
 # show alias for the info command
-app.command(name="show")(info)
+app.command(name="show", help="Print information about the package")(info)
 
 
 @app.command(help="Add a dependency to the package")
@@ -125,10 +125,11 @@ def lock(info: bool = False, debug: bool = False) -> None:
         manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
-@app.command(help="Unlock the package dependencies")
+@app.command(help="Unlock the package dependencies", hidden=True)
 def unlock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = Manager()
+    manager.printer.print_warning("yank is not a supported Myxa command!")
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.unlock(package)
@@ -158,21 +159,28 @@ def check(info: bool = False, debug: bool = False) -> None:
 
 
 @app.command(help="Publish the current package to the index")
-def publish(info: bool = False, debug: bool = False) -> None:
+def publish(
+    major: Annotated[bool, typer.Option("--major")] = False,
+    interactive: Annotated[bool, typer.Option("--interactive/--no-interactive")] = True,
+    info: bool = False,
+    debug: bool = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
-        manager.publish(package, index)
+        manager.publish(package, index, interactive=interactive, major=major)
         save_index(manager, index)
+        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
-@app.command(help="Yank the current package from the index")
+@app.command(help="Yank the current package from the index", hidden=True)
 def yank(version: str, info: bool = False, debug: bool = False) -> None:
     version_obj = Version.from_str(version)
     set_logger_config(info, debug)
     manager = Manager()
+    manager.printer.print_warning("yank is not a supported Myxa command!")
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
@@ -193,10 +201,11 @@ def index(
         manager.printer.print_index(index, show_versions=show_versions)
 
 
-@app.command(help="Set the version of the package")
+@app.command(help="Set the version of the package", hidden=True)
 def version(version: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = Manager()
+    manager.printer.print_warning("version is not a supported Myxa command!")
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         version_obj = Version.from_str(version)

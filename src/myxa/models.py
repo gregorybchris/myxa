@@ -77,6 +77,10 @@ class Version(BaseModel):
         return f"{self.major}.{self.minor}"
 
     @classmethod
+    def default(cls) -> Self:
+        return cls(major=0, minor=1)
+
+    @classmethod
     def from_str(cls, s: str) -> Self:
         if not re.match(r"\d+\.\d+", s):
             msg = f"Invalid version string: {s}"
@@ -151,6 +155,8 @@ class Index(BaseModel):
         if namespace := self.namespaces.get(package.info.name):
             if version.to_str() in namespace.packages:
                 del namespace.packages[version.to_str()]
+                if len(namespace.packages) == 0:
+                    del self.namespaces[package.info.name]
             else:
                 msg = (
                     f"Package {package.info.name} version {version.to_str()}"

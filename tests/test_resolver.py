@@ -16,15 +16,14 @@ class TestResolver:
         euler_package: Package,
     ) -> None:
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         manager.add(app_package, euler_package.info.name, primary_index, euler_package.info.version)
 
-        next_minor_version = euler_package.info.version.next_minor()
-        manager.set_version(euler_package, next_minor_version)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
+        new_version = euler_package.info.version
 
         lock = resolver.resolve(app_package)
-        assert lock.deps[euler_package.info.name].version == next_minor_version
+        assert lock.deps[euler_package.info.name].version == new_version
         assert len(lock.deps) == 1
 
     def test_resolve_below_next_major_version(
@@ -37,12 +36,10 @@ class TestResolver:
     ) -> None:
         original_version = euler_package.info.version
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         manager.add(app_package, euler_package.info.name, primary_index, euler_package.info.version)
 
-        next_major_version = euler_package.info.version.next_major()
-        manager.set_version(euler_package, next_major_version)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False, major=True)
 
         lock = resolver.resolve(app_package)
         assert lock.deps[euler_package.info.name].version == original_version
@@ -58,16 +55,14 @@ class TestResolver:
         flatty_package: Package,
     ) -> None:
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
         manager.add(interlet_package, flatty_package.info.name, primary_index, flatty_package.info.version)
 
         manager.lock(interlet_package, primary_index)
-        manager.publish(interlet_package, primary_index)
+        manager.publish(interlet_package, primary_index, interactive=False)
         manager.add(app_package, interlet_package.info.name, primary_index, interlet_package.info.version)
 
-        next_major_version = flatty_package.info.version.next_major()
-        manager.set_version(flatty_package, next_major_version)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False, major=True)
 
         manager.add(app_package, flatty_package.info.name, primary_index, flatty_package.info.version)
 
@@ -85,15 +80,15 @@ class TestResolver:
         flatty_package: Package,
     ) -> None:
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         manager.add(app_package, euler_package.info.name, primary_index, euler_package.info.version)
 
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
         manager.add(interlet_package, flatty_package.info.name, primary_index, flatty_package.info.version)
 
         manager.lock(interlet_package, primary_index)
-        manager.publish(interlet_package, primary_index)
+        manager.publish(interlet_package, primary_index, interactive=False)
         manager.add(app_package, interlet_package.info.name, primary_index, interlet_package.info.version)
 
         lock = resolver.resolve(app_package)

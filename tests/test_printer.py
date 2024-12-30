@@ -80,9 +80,9 @@ class TestPrinter:
         capsys: pytest.CaptureFixture,
     ) -> None:
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         manager.lock(app_package, primary_index)
-        manager.publish(app_package, primary_index)
+        manager.publish(app_package, primary_index, interactive=False)
 
         printer.print_index(primary_index, show_versions=show_versions)
 
@@ -90,7 +90,7 @@ class TestPrinter:
         text_output = clean_colors(capture_result.out)
 
         if show_versions:
-            expected = ["euler==0.1", "app==1.2"]
+            expected = ["euler==0.1", "app==0.1"]
             assert all(text in text_output for text in expected)
         else:
             expected = ["euler", "app"]
@@ -107,14 +107,14 @@ class TestPrinter:
         capsys: pytest.CaptureFixture,
     ) -> None:
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
         manager.add(interlet_package, flatty_package.info.name, primary_index)
 
         manager.lock(interlet_package, primary_index)
         old_lock = interlet_package.lock
 
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
 
         manager.add(interlet_package, "euler", primary_index)
         manager.remove(interlet_package, flatty_package.info.name)
@@ -128,7 +128,7 @@ class TestPrinter:
 
         expected = """Project lock updated with 1 addition and 1 removal
 + euler~=0.1
-- flatty~=2.0
+- flatty~=0.1
 """
         assert expected in text_output
 

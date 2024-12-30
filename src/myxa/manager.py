@@ -23,17 +23,16 @@ class Manager:
     pluralizer: Pluralizer = field(default_factory=inflect.engine)
 
     def init(self, name: str, description: str, package_filepath: Path) -> None:
-        self.printer.print_message(f"Initializing package {name}...")
+        self.printer.print_message(f"Initializing package {name} :smiley:")
         if package_filepath.exists():
             msg = f"Package file already exists at {package_filepath.absolute()}"
             raise UserError(msg)
 
-        default_version = Version.from_str("0.1")
         package = Package(
             info=PackageInfo(
                 name=name,
                 description=description,
-                version=default_version,
+                version=Version.default(),
                 deps={},
             ),
             members={},
@@ -104,11 +103,8 @@ class Manager:
         else:
             self.printer.print_success("No compatibility breaks found")
 
-    def publish(self, package: Package, index: Index) -> None:
-        version_str = package.info.version.to_str()
-        self.printer.print_message(
-            f"Publishing package {package.info.name} version {version_str} to index {index.name}..."
-        )
+    def publish(self, package: Package, index: Index, interactive: bool = True, major: bool = False) -> None:
+        self.printer.print_message(f"Publishing package {package.info.name} to index {index.name}...")
         if package.lock is None:
             msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
             raise UserError(msg)
@@ -121,13 +117,58 @@ class Manager:
             msg = "Package name cannot start or end with a hyphen"
             raise UserError(msg)
 
-        # TODO: Auto update the version for the user to the next minor or major version based on breaking changes
-        # TODO: Check that the version is incremented only by one (minor or major), should not skip a major or minor
         # TODO: Check that the info hasn't been updated more recently than the lock
         # TODO: Check that all dependencies at the correct versions exist in the index being published to
-        index.add_package(package)
 
-        self.printer.print_success(f"Published {package.info.name} version {version_str} to index {index.name}")
+        try:
+            latest_package = index.get_latest_package(package.info.name)
+            latest_version = latest_package.info.version
+
+            self.printer.print_message(
+                f"The latest published version of {package.info.name} is {latest_version.to_str()}"
+            )
+
+            checker = Checker()
+            compat_breaks = checker.check(latest_package, package)
+            if len(compat_breaks) > 0:
+                self.printer.print_breaks(compat_breaks, latest_package)
+                candidate_version = latest_version.next_major()
+                self.printer.print_warning(f"Will increment the major version to {candidate_version.to_str()}")
+            elif major:
+                candidate_version = latest_version.next_major()
+                self.printer.print_message(
+                    f"Major flag set. Will increment the major version to {candidate_version.to_str()}"
+                )
+            else:
+                candidate_version = latest_version.next_minor()
+                self.printer.print_message(f"Will increment the minor version to {candidate_version.to_str()}")
+
+        except UserError:
+            if package.info.version != Version.default():
+                self.printer.print_warning(
+                    f"Package {package.info.name} has not been published yet."
+                    f" The initial version will be set automatically to {Version.default().to_str()}"
+                )
+            candidate_version = Version.default()
+
+        if interactive:
+            while response := self.printer.input("Proceed to publish? \\[y/n] "):
+                if response.lower() == "n":
+                    self.printer.print_success("Successfully aborted publishing")
+                    break
+                if response.lower() == "y":
+                    self.set_version(package, candidate_version)
+                    index.add_package(package)
+                    self.printer.print_success(
+                        f"Published {package.info.name} version {candidate_version.to_str()} to index {index.name}"
+                    )
+                    break
+        else:
+            self.set_version(package, candidate_version)
+            index.add_package(package)
+            self.printer.print_success(
+                f"Force published {package.info.name} version {candidate_version.to_str()} to index {index.name}"
+            )
 
     def yank(self, package: Package, version: Version, index: Index) -> None:
         self.printer.print_message(f"Yanking package {package.info.name}...")

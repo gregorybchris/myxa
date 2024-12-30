@@ -41,7 +41,7 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
         assert flatty_package.info.name not in interlet_package.info.deps
         manager.add(interlet_package, flatty_package.info.name, primary_index)
         assert flatty_package.info.name in interlet_package.info.deps
@@ -54,7 +54,7 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
         manager.add(interlet_package, flatty_package.info.name, primary_index)
         with pytest.raises(UserError, match="flatty is already a dependency of interlet"):
             manager.add(interlet_package, flatty_package.info.name, primary_index)
@@ -67,7 +67,7 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
         manager.add(interlet_package, flatty_package.info.name, primary_index)
         assert flatty_package.info.name in interlet_package.info.deps
         manager.remove(interlet_package, flatty_package.info.name)
@@ -112,7 +112,7 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
         interlet_package.info.deps[flatty_package.info.name] = Dep(
             name=flatty_package.info.name, version=Version.from_str("100.0")
         )
@@ -148,15 +148,13 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
         manager.add(interlet_package, flatty_package.info.name, primary_index)
         manager.lock(interlet_package, primary_index)
         old_lock = interlet_package.lock
 
-        new_version = flatty_package.info.version.next_minor()
-        manager.set_version(flatty_package, new_version)
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
 
         manager.update(interlet_package, primary_index)
         new_lock = interlet_package.lock
@@ -170,7 +168,7 @@ class TestManager:
         euler_package: Package,
     ) -> None:
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         manager.check(euler_package, primary_index)
 
     def test_publish(
@@ -181,7 +179,7 @@ class TestManager:
     ) -> None:
         manager.lock(euler_package, primary_index)
         assert "euler" not in primary_index.namespaces
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         assert "euler" in primary_index.namespaces
 
     def test_publish_multiple_versions(
@@ -191,12 +189,12 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         assert "euler" in primary_index.namespaces
         assert "0.1" in primary_index.namespaces["euler"].packages
         euler_package.info.version.minor += 1
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         assert "euler" in primary_index.namespaces
         assert "0.2" in primary_index.namespaces["euler"].packages
 
@@ -207,7 +205,7 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         with pytest.raises(UserError, match="No lock found for package euler"):
-            manager.publish(euler_package, primary_index)
+            manager.publish(euler_package, primary_index, interactive=False)
 
     def test_publish_with_invalid_name_raises_user_error(
         self,
@@ -219,22 +217,11 @@ class TestManager:
 
         euler_package.info.name = "euler!"
         with pytest.raises(UserError, match="Package name must be lowercase and can only contain letters and hyphens"):
-            manager.publish(euler_package, primary_index)
+            manager.publish(euler_package, primary_index, interactive=False)
 
         euler_package.info.name = "-euler"
         with pytest.raises(UserError, match="Package name cannot start or end with a hyphen"):
-            manager.publish(euler_package, primary_index)
-
-    def test_publish_duplicate_version_raises_user_error(
-        self,
-        manager: Manager,
-        euler_package: Package,
-        primary_index: Index,
-    ) -> None:
-        manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
-        with pytest.raises(UserError, match="Package euler==0.1 already exists in provided index: primary"):
-            manager.publish(euler_package, primary_index)
+            manager.publish(euler_package, primary_index, interactive=False)
 
     def test_save_and_load_package_from_file(
         self,
@@ -288,15 +275,14 @@ class TestManager:
     ) -> None:
         old_version = euler_package.info.version
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
 
         assert euler_package.info.name in primary_index.namespaces
         assert len(primary_index.namespaces[euler_package.info.name].packages) == 1
 
-        new_version = old_version.next_major()
-        manager.set_version(euler_package, new_version)
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
+        new_version = euler_package.info.version
 
         manager.yank(euler_package, old_version, primary_index)
         assert old_version.to_str() not in primary_index.namespaces[euler_package.info.name].packages
@@ -319,8 +305,9 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
         version = euler_package.info.version
+        manager.publish(euler_package, primary_index, interactive=False)
         manager.yank(euler_package, version, primary_index)
         with pytest.raises(UserError, match=re.escape("Package euler version 0.1 not found in index primary")):
             manager.yank(euler_package, version, primary_index)
@@ -344,14 +331,14 @@ class TestManager:
         primary_index = Index(name="primary")
 
         manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
 
         manager.lock(flatty_package, primary_index)
-        manager.publish(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
 
         manager.add(interlet_package, flatty_package.info.name, primary_index)
         manager.lock(interlet_package, primary_index)
-        manager.publish(interlet_package, primary_index)
+        manager.publish(interlet_package, primary_index, interactive=False)
 
         manager.add(app_package, euler_package.info.name, primary_index)
         manager.add(app_package, interlet_package.info.name, primary_index)

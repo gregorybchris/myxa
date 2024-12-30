@@ -23,14 +23,20 @@ class Printer:
     console: Console = field(default_factory=Console)
     pluralizer: Pluralizer = field(default_factory=inflect.engine)
 
-    def print_error(self, msg: str) -> None:
-        self.console.print(f"[bold red]{msg}")
-
     def print_message(self, msg: str) -> None:
         self.console.print(f"[reset][bold]{msg}")
 
     def print_success(self, msg: str) -> None:
         self.console.print(f"[bold green]{msg}")
+
+    def print_warning(self, msg: str) -> None:
+        self.console.print(f"[bold red]{msg}")
+
+    def print_error(self, msg: str) -> None:
+        self.console.print(f"[bold red]{msg}")
+
+    def input(self, prompt: str) -> str:
+        return self.console.input(f"[bold]{prompt}")
 
     def _add_tree_node(self, node: Node, tree: Tree) -> None:
         type_builtin = builtins.type
