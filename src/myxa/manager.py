@@ -49,7 +49,7 @@ class Manager:
         show_lock: bool = True,
         show_interface: bool = True,
     ) -> None:
-        if version is not None:
+        if version is not None and version != package.info.version:
             package = index.get_package(package.info.name, version)
         self.printer.print_package(
             package,
