@@ -68,7 +68,7 @@ class TestPrinter:
             assert "Interface" not in text_output
 
     @pytest.mark.parametrize("show_versions", [True, False])
-    def test_print_index(
+    def test_print_index(  # noqa: PLR0913
         self,
         printer: Printer,
         manager: Manager,
