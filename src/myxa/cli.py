@@ -2,7 +2,7 @@ import logging
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated, Generator
+from typing import Annotated, Generator, Optional
 
 import inflect
 import typer
@@ -132,13 +132,14 @@ def unlock(info: bool = False, debug: bool = False) -> None:
 
 
 @app.command(help="Add a dependency to the package")
-def add(dep_name: str, info: bool = False, debug: bool = False) -> None:
+def add(dep_name: str, version: Optional[str] = None, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = get_manager()
     with error_handler(manager, debug=debug):
         package = load_package(manager)
         index = load_index(manager)
-        manager.add(package, dep_name, index)
+        version_obj = Version.from_str(version) if version else None
+        manager.add(package, dep_name, index, version=version_obj)
         save_package(manager, package)
 
 

@@ -2,10 +2,11 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 from myxa.errors import UserError
 from myxa.extra_types import Pluralizer
-from myxa.models import Dep, Index, Namespace, Package, PackageInfo, PackageLock, Version
+from myxa.models import Dep, Index, Namespace, Package, PackageInfo, Version
 from myxa.printer import Printer
 from myxa.resolver import Resolver
 
@@ -85,21 +86,23 @@ class Manager:
         msg = f"Package {name} not found in the provided index: {index.name}"
         raise UserError(msg)
 
-    def _get_latest_package(self, namespace: Namespace) -> Package:
+    def _get_latest_package(self, name: str, index: Index) -> Package:
+        namespace = self._find_namespace(name, index)
         versions = [Version.from_str(s) for s in namespace.packages]
         latest_version = max(versions)
         return namespace.packages[latest_version.to_str()]
 
-    def add(self, package: Package, dep_name: str, index: Index) -> None:
+    def add(self, package: Package, dep_name: str, index: Index, version: Optional[Version]) -> None:
         self.printer.print_message(f"Adding dependency {dep_name} to package {package.info.name}...")
-        if package.info.deps.get(dep_name):
+        if package.info.deps.get(dep_name) and (version is None or package.info.deps[dep_name].version == version):
             msg = f"{dep_name} is already a dependency of {package.info.name}"
             raise UserError(msg)
 
-        # TODO: Resolve the latest compatible version of the dep
-        namespace = self._find_namespace(dep_name, index)
-        latest_package = self._get_latest_package(namespace)
-        version = latest_package.info.version
+        # TODO: Add the latest compatible version if version not provided, not just the latest version
+        # TODO: Check that the provided version is compatible before adding it
+        if version is None:
+            dep_package = self._get_latest_package(dep_name, index)
+            version = dep_package.info.version
         package.info.deps[dep_name] = Dep(name=dep_name, version=version)
         self.printer.print_success(f"Added {dep_name}~={version.to_str()} to {package.info.name}")
 
@@ -113,19 +116,9 @@ class Manager:
 
     def lock(self, package: Package, index: Index) -> None:
         self.printer.print_message(f"Locking package {package.info.name}...")
-        new_lock = PackageLock()
         resolver = Resolver(index=index)
-        resolver_result = resolver.resolve(package)
-        for dep in resolver_result.values():
-            if namespace := index.namespaces.get(dep.name):
-                latest_package = self._get_latest_package(namespace)
-                version = latest_package.info.version
-                new_lock.deps[dep.name] = Dep(name=dep.name, version=version)
-            else:
-                msg = f"Dependency {dep.name} not found in index {index.name}"
-                raise UserError(msg)
-        package.lock = new_lock
-        n_deps = len(new_lock.deps)
+        package.lock = resolver.resolve(package)
+        n_deps = len(package.lock.deps)
         self.printer.print_success(
             f"Locked {package.info.name} with {n_deps} {self.pluralizer.plural_noun('dependency', n_deps)}"
         )
