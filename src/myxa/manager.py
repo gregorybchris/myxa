@@ -62,20 +62,8 @@ class Manager:
 
     def yank(self, package: Package, version: Version, index: Index) -> None:
         self.printer.print_message(f"Yanking package {package.info.name}...")
-        if namespace := index.namespaces.get(package.info.name):
-            if namespace.packages.pop(version.to_str(), None):
-                self.printer.print_success(
-                    f"Yanked {package.info.name} version {version.to_str()} from index {index.name}"
-                )
-            else:
-                msg = (
-                    f"Package {package.info.name} version {version.to_str()}"
-                    f" not found in index {index.name}, unable to yank"
-                )
-                raise UserError(msg)
-        else:
-            msg = f"Package {package.info.name} not found in index {index.name}, unable to yank"
-            raise UserError(msg)
+        index.remove_package(package, version)
+        self.printer.print_success(f"Yanked {package.info.name} version {version.to_str()} from index {index.name}")
 
     def add(self, package: Package, dep_name: str, index: Index, version: Optional[Version] = None) -> None:
         self.printer.print_message(f"Adding dependency {dep_name} to package {package.info.name}...")

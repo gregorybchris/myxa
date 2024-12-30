@@ -131,6 +131,20 @@ class Index(BaseModel):
             namespace.packages[version_str] = package
             self.namespaces[package.info.name] = namespace
 
+    def remove_package(self, package: Package, version: Version) -> None:
+        if namespace := self.namespaces.get(package.info.name):
+            if version.to_str() in namespace.packages:
+                del namespace.packages[version.to_str()]
+            else:
+                msg = (
+                    f"Package {package.info.name} version {version.to_str()}"
+                    f" not found in index {self.name}, unable to yank"
+                )
+                raise UserError(msg)
+        else:
+            msg = f"Package {package.info.name} not found in index {self.name}, unable to yank"
+            raise UserError(msg)
+
     def get_namespace(self, package_name: str) -> Namespace:
         if namespace := self.namespaces.get(package_name):
             return namespace
