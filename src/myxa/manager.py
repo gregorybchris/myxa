@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -112,7 +113,14 @@ class Manager:
             msg = f"No lock found for package {package.info.name}, unable to publish it to index {index.name}"
             raise UserError(msg)
 
-        # TODO: Check package name is valid with regex
+        if re.search(r"[^a-z-]", package.info.name):
+            msg = "Package name must be lowercase and can only contain letters and hyphens"
+            raise UserError(msg)
+
+        if package.info.name.startswith("-") or package.info.name.endswith("-"):
+            msg = "Package name cannot start or end with a hyphen"
+            raise UserError(msg)
+
         # TODO: Auto update the version for the user to the next minor or major version based on breaking changes
         # TODO: Check that the version is incremented only by one (minor or major), should not skip a major or minor
         # TODO: Check that the info hasn't been updated more recently than the lock

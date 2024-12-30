@@ -209,6 +209,22 @@ class TestManager:
         with pytest.raises(UserError, match="No lock found for package euler"):
             manager.publish(euler_package, primary_index)
 
+    def test_publish_with_invalid_name_raises_user_error(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+
+        euler_package.info.name = "euler!"
+        with pytest.raises(UserError, match="Package name must be lowercase and can only contain letters and hyphens"):
+            manager.publish(euler_package, primary_index)
+
+        euler_package.info.name = "-euler"
+        with pytest.raises(UserError, match="Package name cannot start or end with a hyphen"):
+            manager.publish(euler_package, primary_index)
+
     def test_publish_duplicate_version_raises_user_error(
         self,
         manager: Manager,
