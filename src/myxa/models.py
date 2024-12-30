@@ -1,8 +1,11 @@
 import logging
+import re
 from enum import StrEnum
 from typing import Literal, Optional, Self, Union
 
 from pydantic import BaseModel, Field
+
+from myxa.errors import UserError
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +61,9 @@ class Version(BaseModel):
 
     @classmethod
     def from_str(cls, s: str) -> Self:
+        if not re.match(r"\d+\.\d+", s):
+            msg = f"Invalid version string: {s}"
+            raise UserError(msg)
         parts = s.split(".")
         major = int(parts[0])
         minor = int(parts[1])
