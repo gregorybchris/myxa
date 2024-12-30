@@ -1,8 +1,10 @@
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
+import inflect
 
 from myxa.errors import UserError
 from myxa.extra_types import Pluralizer
@@ -15,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass(kw_only=True)
 class Manager:
-    printer: Printer
-    pluralizer: Pluralizer
+    printer: Printer = field(default_factory=Printer)
+    pluralizer: Pluralizer = field(default_factory=inflect.engine)
 
     def init(self, name: str, description: str, package_filepath: Path) -> None:
         self.printer.print_message(f"Initializing package {name}...")

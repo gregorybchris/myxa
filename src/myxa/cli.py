@@ -4,23 +4,19 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, Generator, Optional
 
-import inflect
 import typer
-from rich.console import Console
 from rich.logging import RichHandler
 from typer import Typer
 
 from myxa.errors import UserError
 from myxa.manager import Manager
 from myxa.models import Index, Version
-from myxa.printer import Printer
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_PACKAGE_FILEPATH = Path("package.json")
 
 app = Typer(pretty_exceptions_enable=False)
-console = Console()
 
 
 def set_logger_config(info: bool, debug: bool) -> None:
@@ -31,12 +27,6 @@ def set_logger_config(info: bool, debug: bool) -> None:
         logging.basicConfig(level=logging.INFO, handlers=handlers, format=log_format)
     if debug:
         logging.basicConfig(level=logging.DEBUG, handlers=handlers, format=log_format)
-
-
-def get_manager() -> Manager:
-    printer = Printer(console=console)
-    pluralizer = inflect.engine()
-    return Manager(printer=printer, pluralizer=pluralizer)
 
 
 def load_index_path() -> Path:
@@ -73,7 +63,7 @@ def error_handler(manager: Manager, debug: bool = False) -> Generator[None, None
 @app.command(help="Initialize a new package")
 def init(name: str, description: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         manager.init(name, description, DEFAULT_PACKAGE_FILEPATH)
 
@@ -87,7 +77,7 @@ def info(
     debug: bool = False,
 ) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.printer.print_package(
@@ -105,7 +95,7 @@ app.command(name="show")(info)
 @app.command(help="Lock the package dependencies")
 def lock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         index = load_index(manager)
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
@@ -116,7 +106,7 @@ def lock(info: bool = False, debug: bool = False) -> None:
 @app.command(help="Unlock the package dependencies")
 def unlock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.unlock(package)
@@ -126,7 +116,7 @@ def unlock(info: bool = False, debug: bool = False) -> None:
 @app.command(help="Add a dependency to the package")
 def add(dep_name: str, version: Optional[str] = None, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
@@ -138,7 +128,7 @@ def add(dep_name: str, version: Optional[str] = None, info: bool = False, debug:
 @app.command(help="Remove a dependency from the package")
 def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.remove(package, dep_name)
@@ -148,7 +138,7 @@ def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
 @app.command(help="Publish the current package to the index")
 def publish(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
@@ -159,7 +149,7 @@ def publish(info: bool = False, debug: bool = False) -> None:
 @app.command(help="Check if there are breaking changes")
 def check(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
@@ -171,7 +161,7 @@ def check(info: bool = False, debug: bool = False) -> None:
 def yank(version: str, info: bool = False, debug: bool = False) -> None:
     version_obj = Version.from_str(version)
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
@@ -182,7 +172,7 @@ def yank(version: str, info: bool = False, debug: bool = False) -> None:
 @app.command(help="Update all dependencies to the latest compatible version")
 def update(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.update(package)
@@ -196,19 +186,16 @@ def index(
     debug: bool = False,
 ) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         index = load_index(manager)
-        manager.printer.print_index(
-            index,
-            show_versions=show_versions,
-        )
+        manager.printer.print_index(index, show_versions=show_versions)
 
 
 @app.command(help="Set the version of the package")
 def version(version: str, info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
-    manager = get_manager()
+    manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         version_obj = Version.from_str(version)

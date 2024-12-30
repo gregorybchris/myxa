@@ -1,6 +1,6 @@
 import builtins
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from rich.console import Console, Group
 from rich.padding import Padding
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(kw_only=True)
 class Printer:
-    console: Console
+    console: Console = field(default_factory=Console)
 
     def print_error(self, msg: str) -> None:
         self.console.print(f"[bold red]{msg}")
