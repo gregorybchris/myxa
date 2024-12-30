@@ -62,9 +62,9 @@ class TestManager:
     ) -> None:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
-        assert "flatty" not in interlet_package.info.deps
-        manager.add(interlet_package, "flatty", primary_index)
-        assert "flatty" in interlet_package.info.deps
+        assert flatty_package.info.name not in interlet_package.info.deps
+        manager.add(interlet_package, flatty_package.info.name, primary_index)
+        assert flatty_package.info.name in interlet_package.info.deps
 
     def test_add_dep_twice_raises_user_error(
         self,
@@ -75,9 +75,9 @@ class TestManager:
     ) -> None:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
-        manager.add(interlet_package, "flatty", primary_index)
+        manager.add(interlet_package, flatty_package.info.name, primary_index)
         with pytest.raises(UserError, match="flatty is already a dependency of interlet"):
-            manager.add(interlet_package, "flatty", primary_index)
+            manager.add(interlet_package, flatty_package.info.name, primary_index)
 
     def test_remove(
         self,
@@ -88,10 +88,10 @@ class TestManager:
     ) -> None:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
-        manager.add(interlet_package, "flatty", primary_index)
-        assert "flatty" in interlet_package.info.deps
-        manager.remove(interlet_package, "flatty")
-        assert "flatty" not in interlet_package.info.deps
+        manager.add(interlet_package, flatty_package.info.name, primary_index)
+        assert flatty_package.info.name in interlet_package.info.deps
+        manager.remove(interlet_package, flatty_package.info.name)
+        assert flatty_package.info.name not in interlet_package.info.deps
 
     def test_remove_missing_dep_raises_user_error(
         self,
@@ -161,7 +161,9 @@ class TestManager:
     ) -> None:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
-        interlet_package.info.deps["flatty"] = Dep(name="flatty", version=Version.from_str("100.0"))
+        interlet_package.info.deps[flatty_package.info.name] = Dep(
+            name=flatty_package.info.name, version=Version.from_str("100.0")
+        )
         with pytest.raises(UserError, match="Package flatty==100.0 not found in the provided index: primary"):
             manager.lock(interlet_package, primary_index)
 
@@ -230,19 +232,27 @@ class TestManager:
         with pytest.raises(UserError, match=re.escape(f"Index file not found at {primary_index_filepath}")):
             manager.load_index(primary_index_filepath)
 
-    def test_yank(
+    def test_yank_earlier_version_removes_from_index(
         self,
         manager: Manager,
         euler_package: Package,
         primary_index: Index,
     ) -> None:
+        original_version = euler_package.info.version
         manager.lock(euler_package, primary_index)
         manager.publish(euler_package, primary_index)
-        assert "euler" in primary_index.namespaces
-        assert len(primary_index.namespaces["euler"].packages) == 1
-        version = euler_package.info.version
-        manager.yank(euler_package, version, primary_index)
-        assert len(primary_index.namespaces["euler"].packages) == 0
+
+        assert euler_package.info.name in primary_index.namespaces
+        assert len(primary_index.namespaces[euler_package.info.name].packages) == 1
+
+        new_version = original_version.next_major()
+        manager.set_version(euler_package, new_version)
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+
+        manager.yank(euler_package, original_version, primary_index)
+        assert original_version.to_str() not in primary_index.namespaces[euler_package.info.name].packages
+        assert new_version.to_str() in primary_index.namespaces[euler_package.info.name].packages
 
     def test_yank_missing_package_raises_user_error(
         self,

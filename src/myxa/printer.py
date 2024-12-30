@@ -105,7 +105,8 @@ class Printer:
         for namespace in index.namespaces.values():
             namespace_tree = tree.add(namespace.name, style="steel_blue1")
             if show_versions:
-                for package in namespace.packages.values():
+                sorted_packages = sorted(namespace.packages.values(), key=lambda p: p.info.version)
+                for package in sorted_packages:
                     namespace_tree.add(f"{package.info.name}=={package.info.version.to_str()}", style="steel_blue3")
                 if not namespace.packages:
                     namespace_tree.add("\\[none]", style="steel_blue3")
