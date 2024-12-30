@@ -110,3 +110,27 @@ class Namespace(BaseModel):
 class Index(BaseModel):
     name: str
     namespaces: dict[str, Namespace] = Field(default_factory=dict)
+
+    def get_namespace(self, package_name: str) -> Namespace:
+        if namespace := self.namespaces.get(package_name):
+            return namespace
+        msg = f"Package {package_name} not found in the provided index: {self.name}"
+        raise UserError(msg)
+
+    def list_versions(self, package_name: str) -> list[Version]:
+        namespace = self.get_namespace(package_name)
+        return [package.info.version for package in namespace.packages.values()]
+
+    def get_package(self, package_name: str, version: Version) -> Package:
+        namespace = self.get_namespace(package_name)
+        if package := namespace.packages.get(version.to_str()):
+            return package
+        msg = f"Package {package_name}=={version.to_str()} not found in the provided index: {self.name}"
+        raise UserError(msg)
+
+    def get_latest_package(self, package_name: str) -> Package:
+        namespace = self.get_namespace(package_name)
+        versions = [Version.from_str(s) for s in namespace.packages]
+        latest_version = max(versions)
+        version_str = latest_version.to_str()
+        return namespace.packages[version_str]

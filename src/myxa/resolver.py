@@ -4,7 +4,7 @@ from itertools import product
 from typing import Iterator
 
 from myxa.errors import UserError
-from myxa.models import Dep, Index, Namespace, Package, PackageLock, Version
+from myxa.models import Dep, Index, Package, PackageLock, Version
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +51,11 @@ class Resolver:
     def _fill_flat_deps(self, package: Package, flat_deps: FlatDeps) -> None:
         for dep_name, _ in package.info.deps.items():
             flat_deps[dep_name] = {}
-            for dep_version in self._iter_versions(dep_name):
+            sorted_versions = sorted(self.index.list_versions(dep_name), reverse=True)
+            for dep_version in sorted_versions:
                 verstr = dep_version.to_str()
                 flat_deps[dep_name][verstr] = {}
-                dep_package = self._get_package(dep_name, dep_version)
+                dep_package = self.index.get_package(dep_name, dep_version)
                 for sub_dep_name, sub_dep in dep_package.info.deps.items():
                     sub_dep_verstr = sub_dep.version.to_str()
                     flat_deps[dep_name][verstr][sub_dep_name] = sub_dep_verstr
@@ -91,21 +92,3 @@ class Resolver:
         if result_ver.major != dep_ver.major:
             return False
         return result_ver.minor >= dep_ver.minor
-
-    def _get_namespace(self, package_name: str) -> Namespace:
-        if namespace := self.index.namespaces.get(package_name):
-            return namespace
-        msg = f"{package_name} not found in index {self.index.name}"
-        raise UserError(msg)
-
-    def _get_package(self, package_name: str, version: Version) -> Package:
-        namespace = self._get_namespace(package_name)
-        if package := namespace.packages.get(version.to_str()):
-            return package
-        msg = f"{package_name} version {version.to_str()} not found in index {self.index.name}"
-        raise UserError(msg)
-
-    def _iter_versions(self, package_name: str) -> Iterator[Version]:
-        namespace = self._get_namespace(package_name)
-        unsorted_versions = [package.info.version for package in namespace.packages.values()]
-        yield from sorted(unsorted_versions, reverse=True)

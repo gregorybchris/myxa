@@ -64,14 +64,6 @@ class TestManager:
         with pytest.raises(UserError, match="Package euler version 0.1 already exists in index primary"):
             manager.publish(euler_package, primary_index)
 
-    def test_package_not_found_in_index_raises_user_error(
-        self,
-        manager: Manager,
-        primary_index: Index,
-    ) -> None:
-        with pytest.raises(UserError, match=re.escape("Package euler not found in the provided index: primary")):
-            manager._find_namespace("euler", primary_index)
-
     def test_add(
         self,
         manager: Manager,
@@ -181,7 +173,7 @@ class TestManager:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index)
         interlet_package.info.deps["flatty"] = Dep(name="flatty", version=Version.from_str("100.0"))
-        with pytest.raises(UserError, match="Package flatty~=100.0 not found in the provided index: primary"):
+        with pytest.raises(UserError, match="Package flatty==100.0 not found in the provided index: primary"):
             manager.lock(interlet_package, primary_index)
 
     def test_unlock(

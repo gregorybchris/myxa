@@ -83,25 +83,6 @@ class Manager:
             msg = f"Package {package.info.name} not found in index {index.name}, unable to yank"
             raise UserError(msg)
 
-    def _find_namespace(self, name: str, index: Index) -> Namespace:
-        if namespace := index.namespaces.get(name):
-            return namespace
-        msg = f"Package {name} not found in the provided index: {index.name}"
-        raise UserError(msg)
-
-    def _get_package(self, name: str, version: Version, index: Index) -> Package:
-        namespace = self._find_namespace(name, index)
-        if not namespace.packages.get(version.to_str()):
-            msg = f"Package {name}~={version.to_str()} not found in the provided index: {index.name}"
-            raise UserError(msg)
-        return namespace.packages[version.to_str()]
-
-    def _get_latest_package(self, name: str, index: Index) -> Package:
-        namespace = self._find_namespace(name, index)
-        versions = [Version.from_str(s) for s in namespace.packages]
-        latest_version = max(versions)
-        return namespace.packages[latest_version.to_str()]
-
     def add(self, package: Package, dep_name: str, index: Index, version: Optional[Version] = None) -> None:
         self.printer.print_message(f"Adding dependency {dep_name} to package {package.info.name}...")
         if package.info.deps.get(dep_name) and (version is None or package.info.deps[dep_name].version == version):
@@ -111,7 +92,7 @@ class Manager:
         # TODO: Add the latest compatible version if version not provided, not just the latest version
         # TODO: Check that the provided version is compatible before adding it
         if version is None:
-            dep_package = self._get_latest_package(dep_name, index)
+            dep_package = index.get_latest_package(dep_name)
             version = dep_package.info.version
         package.info.deps[dep_name] = Dep(name=dep_name, version=version)
         self.printer.print_success(f"Added {dep_name}~={version.to_str()} to {package.info.name}")
@@ -127,7 +108,7 @@ class Manager:
     def lock(self, package: Package, index: Index) -> None:
         self.printer.print_message(f"Locking package {package.info.name}...")
         for dep in package.info.deps.values():
-            self._get_package(dep.name, dep.version, index)
+            index.get_package(dep.name, dep.version)
         resolver = Resolver(index=index)
         package.lock = resolver.resolve(package)
         n_deps = len(package.lock.deps)
