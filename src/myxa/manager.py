@@ -121,7 +121,7 @@ class Manager:
         else:
             self.printer.print_success("No compatibility breaks found")
 
-    def publish(  # noqa: PLR0912
+    def publish(
         self,
         package: Package,
         index: Index,
@@ -166,13 +166,11 @@ class Manager:
             else:
                 candidate_version = latest_version.next_minor()
                 self.printer.print_message(f"Will increment the minor version to {candidate_version.to_str()}")
-
         except UserError:
-            if package.info.version != Version.default():
-                self.printer.print_warning(
-                    f"Package {package.info.name} has not been published yet."
-                    f" The initial version will be set automatically to {Version.default().to_str()}"
-                )
+            self.printer.print_message(
+                f"Package {package.info.name} has not been published yet."
+                f" The initial version will be set automatically to {Version.default().to_str()}"
+            )
             candidate_version = Version.default()
 
         if interactive:
