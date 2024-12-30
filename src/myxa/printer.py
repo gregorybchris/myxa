@@ -138,9 +138,10 @@ class Printer:
             for dep_name in removals:
                 self.print_message(f"[red]- {dep_name}~={lock_1.deps[dep_name].version.to_str()}")
 
-    def print_breaks(self, compat_breaks: list[CompatBreak]) -> None:
+    def print_breaks(self, compat_breaks: list[CompatBreak], latest_package: Package) -> None:
         self.print_error(
             f"Found {len(compat_breaks)} compatibility {self.pluralizer.plural_noun('break', len(compat_breaks))}"
+            f" compared to {latest_package.info.name}=={latest_package.info.version.to_str()}"
         )
         for compat_break in compat_breaks:
             self.print_break(compat_break)

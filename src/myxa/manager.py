@@ -97,9 +97,9 @@ class Manager:
         self.printer.print_message(f"Checking package {package.info.name}...")
         checker = Checker()
         latest_package = index.get_latest_package(package.info.name)
-        breaks = checker.check(latest_package, package)
-        if len(breaks) > 0:
-            self.printer.print_breaks(breaks)
+        compat_breaks = checker.check(latest_package, package)
+        if len(compat_breaks) > 0:
+            self.printer.print_breaks(compat_breaks, latest_package)
         else:
             self.printer.print_success("No compatibility breaks found")
 

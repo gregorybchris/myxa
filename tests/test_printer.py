@@ -147,12 +147,12 @@ class TestPrinter:
         del euler_package.members["math"].members["trig"]
 
         compat_breaks = checker.check(original_package, euler_package)
-        printer.print_breaks(compat_breaks)
+        printer.print_breaks(compat_breaks, original_package)
 
         capture_result = capsys.readouterr()
         text_output = clean_colors(capture_result.out)
 
-        expected = """Found 5 compatibility breaks
+        expected = """Found 5 compatibility breaks compared to euler==0.1
 - The type of Const 'euler.math.pi' has changed from Float to Str
 - Const 'euler.math.e' has been removed
 - The type of Param 'euler.math.add.a' has changed from Int to Float
