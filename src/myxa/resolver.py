@@ -9,6 +9,7 @@ from myxa.models import Dep, Index, Package, PackageLock, Version
 logger = logging.getLogger(__name__)
 
 
+# TODO: Clean up these types
 Name = str
 VerStr = str
 FlatDeps = dict[Name, dict[VerStr, dict[Name, VerStr]]]
