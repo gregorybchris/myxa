@@ -28,15 +28,15 @@ class TestPrinter:
     def test_print_package(  # noqa: PLR0913
         self,
         printer: Printer,
-        app_package: Package,
+        euler_package: Package,
         show_deps: bool,
         show_lock: bool,
         show_interface: bool,
         capsys: pytest.CaptureFixture,
     ) -> None:
-        app_package.lock = PackageLock(deps=app_package.info.deps)
+        euler_package.lock = PackageLock(deps=euler_package.info.deps)
         printer.print_package(
-            app_package,
+            euler_package,
             show_deps=show_deps,
             show_lock=show_lock,
             show_interface=show_interface,
@@ -45,9 +45,9 @@ class TestPrinter:
         capture_result = capsys.readouterr()
         text_output = clean_colors(capture_result.out)
 
-        assert "app" in text_output
-        assert "1.2" in text_output
-        assert "A fun app for doing math" in text_output
+        assert euler_package.info.name in text_output
+        assert euler_package.info.version.to_str() in text_output
+        assert euler_package.info.description in text_output
 
         if show_deps:
             assert "Dependencies" in text_output
@@ -63,7 +63,8 @@ class TestPrinter:
 
         if show_interface:
             assert "Interface" in text_output
-            assert "run()" in text_output
+            assert "add(" in text_output
+            assert "pi" in text_output
         else:
             assert "Interface" not in text_output
 
