@@ -72,7 +72,7 @@ def init(name: str, description: str, info: bool = False, debug: bool = False) -
 def info(
     show_deps: Annotated[bool, typer.Option("--show-deps/--no-deps")] = True,
     show_lock: Annotated[bool, typer.Option("--show-lock/--no-lock")] = True,
-    show_modules: Annotated[bool, typer.Option("--show-modules/--no-modules")] = True,
+    show_interface: Annotated[bool, typer.Option("--show-interface/--no-interface")] = True,
     info: bool = False,
     debug: bool = False,
 ) -> None:
@@ -84,7 +84,7 @@ def info(
             package,
             show_deps=show_deps,
             show_lock=show_lock,
-            show_modules=show_modules,
+            show_interface=show_interface,
         )
 
 

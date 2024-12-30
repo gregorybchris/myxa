@@ -5,6 +5,7 @@ import pytest
 from rich.console import Console
 
 from myxa.checker import Checker
+from myxa.manager import Manager
 from myxa.models import Const, Index, Package, PackageLock, Type
 from myxa.printer import Printer
 
@@ -23,34 +24,112 @@ def clean_colors(text: str) -> str:
 class TestPrinter:
     @pytest.mark.parametrize("show_deps", [True, False])
     @pytest.mark.parametrize("show_lock", [True, False])
-    @pytest.mark.parametrize("show_modules", [True, False])
-    def test_print_package(
+    @pytest.mark.parametrize("show_interface", [True, False])
+    def test_print_package(  # noqa: PLR0913
         self,
         printer: Printer,
         app_package: Package,
         show_deps: bool,
         show_lock: bool,
-        show_modules: bool,
+        show_interface: bool,
+        capsys: pytest.CaptureFixture,
     ) -> None:
         app_package.lock = PackageLock(deps=app_package.info.deps)
         printer.print_package(
             app_package,
             show_deps=show_deps,
             show_lock=show_lock,
-            show_modules=show_modules,
+            show_interface=show_interface,
         )
+
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+
+        assert "app" in text_output
+        assert "1.2" in text_output
+        assert "A fun app for doing math" in text_output
+
+        if show_deps:
+            assert "Dependencies" in text_output
+            assert "[none]" in text_output
+        else:
+            assert "Dependencies" not in text_output
+
+        if show_lock:
+            assert "Locked dependencies" in text_output
+            assert "[none]" in text_output
+        else:
+            assert "Locked dependencies" not in text_output
+
+        if show_interface:
+            assert "Interface" in text_output
+            assert "run()" in text_output
+        else:
+            assert "Interface" not in text_output
 
     @pytest.mark.parametrize("show_versions", [True, False])
     def test_print_index(
         self,
         printer: Printer,
+        manager: Manager,
+        app_package: Package,
+        euler_package: Package,
         primary_index: Index,
         show_versions: bool,
+        capsys: pytest.CaptureFixture,
     ) -> None:
-        printer.print_index(
-            primary_index,
-            show_versions=show_versions,
-        )
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        manager.lock(app_package, primary_index)
+        manager.publish(app_package, primary_index)
+
+        printer.print_index(primary_index, show_versions=show_versions)
+
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+
+        if show_versions:
+            expected = ["euler==0.1", "app==1.2"]
+            assert all(text in text_output for text in expected)
+        else:
+            expected = ["euler", "app"]
+            assert all(text in text_output for text in expected)
+
+    def test_print_lock_diff(  # noqa: PLR0913
+        self,
+        printer: Printer,
+        manager: Manager,
+        interlet_package: Package,
+        flatty_package: Package,
+        euler_package: Package,
+        primary_index: Index,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        manager.lock(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index)
+        manager.add(interlet_package, flatty_package.info.name, primary_index)
+
+        manager.lock(interlet_package, primary_index)
+        old_lock = interlet_package.lock
+
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+
+        manager.add(interlet_package, "euler", primary_index)
+        manager.remove(interlet_package, flatty_package.info.name)
+        manager.lock(interlet_package, primary_index)
+        new_lock = interlet_package.lock
+
+        printer.print_lock_diff(old_lock, new_lock)
+
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+
+        expected = """Project lock updated with 1 addition and 1 removal
++ euler~=0.1
+- flatty~=2.0
+"""
+        assert expected in text_output
 
     def test_print_breaks(
         self,
@@ -69,8 +148,8 @@ class TestPrinter:
         compat_breaks = checker.check(original_package, euler_package)
         printer.print_breaks(compat_breaks)
 
-        captured = capsys.readouterr()
-        text_output = clean_colors(captured.out)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
 
         expected = """Found 5 compatibility breaks
 - The type of Const 'euler.math.pi' has changed from Float to Str

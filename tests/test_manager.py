@@ -238,20 +238,20 @@ class TestManager:
         euler_package: Package,
         primary_index: Index,
     ) -> None:
-        original_version = euler_package.info.version
+        old_version = euler_package.info.version
         manager.lock(euler_package, primary_index)
         manager.publish(euler_package, primary_index)
 
         assert euler_package.info.name in primary_index.namespaces
         assert len(primary_index.namespaces[euler_package.info.name].packages) == 1
 
-        new_version = original_version.next_major()
+        new_version = old_version.next_major()
         manager.set_version(euler_package, new_version)
         manager.lock(euler_package, primary_index)
         manager.publish(euler_package, primary_index)
 
-        manager.yank(euler_package, original_version, primary_index)
-        assert original_version.to_str() not in primary_index.namespaces[euler_package.info.name].packages
+        manager.yank(euler_package, old_version, primary_index)
+        assert old_version.to_str() not in primary_index.namespaces[euler_package.info.name].packages
         assert new_version.to_str() in primary_index.namespaces[euler_package.info.name].packages
 
     def test_yank_missing_package_raises_user_error(

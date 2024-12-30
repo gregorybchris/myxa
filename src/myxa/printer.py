@@ -59,7 +59,7 @@ class Printer:
         package: Package,
         show_deps: bool = True,
         show_lock: bool = True,
-        show_modules: bool = True,
+        show_interface: bool = True,
     ) -> None:
         info = package.info
 
@@ -89,13 +89,13 @@ class Printer:
                 lock_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, lock_tree)
 
-        if show_modules:
-            modules_tree = Tree("Interface", style="steel_blue3")
+        if show_interface:
+            mod_tree = Tree("Interface", style="steel_blue3")
             for node in package.members.values():
-                self._add_tree_node(node, modules_tree)
+                self._add_tree_node(node, mod_tree)
             if not package.members:
-                modules_tree.add("\\[empty]", style="steel_blue1")
-            group_renderables = (*group_renderables, padding, modules_tree)
+                mod_tree.add("\\[empty]", style="steel_blue1")
+            group_renderables = (*group_renderables, padding, mod_tree)
 
         group = Group(*group_renderables)
         panel = Panel(group, title=info.name, border_style="black")

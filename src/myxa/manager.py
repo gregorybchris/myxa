@@ -64,13 +64,13 @@ class Manager:
 
     def lock(self, package: Package, index: Index) -> None:
         self.printer.print_message(f"Locking package {package.info.name}...")
-        original_lock = package.lock
+        old_lock = package.lock
         # Check that all dependencies exist in the index before trying to resolve
         for dep in package.info.deps.values():
             index.get_package(dep.name, dep.version)
         resolver = Resolver(index=index)
         package.lock = resolver.resolve(package)
-        self.printer.print_lock_diff(original_lock, package.lock)
+        self.printer.print_lock_diff(old_lock, package.lock)
 
     def unlock(self, package: Package) -> None:
         self.printer.print_message(f"Unlocking package {package.info.name}...")
@@ -85,13 +85,13 @@ class Manager:
 
     def update(self, package: Package, index: Index) -> None:
         self.printer.print_message(f"Updating dependencies for {package.info.name}...")
-        original_lock = package.lock
+        old_lock = package.lock
         # Check that all dependencies exist in the index before trying to resolve
         for dep in package.info.deps.values():
             index.get_package(dep.name, dep.version)
         resolver = Resolver(index=index)
         package.lock = resolver.resolve(package)
-        self.printer.print_lock_diff(original_lock, package.lock)
+        self.printer.print_lock_diff(old_lock, package.lock)
 
     def check(self, package: Package, index: Index) -> None:
         self.printer.print_message(f"Checking package {package.info.name}...")
