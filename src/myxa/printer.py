@@ -8,7 +8,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
-from myxa.errors import InternalError, UserError
+from myxa.errors import InternalError
 from myxa.models import Const, Func, Index, Mod, Node, Package
 
 logger = logging.getLogger(__name__)
@@ -76,11 +76,7 @@ class Printer:
                 deps_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, deps_tree)
 
-        if show_lock:
-            if package.lock is None:
-                msg = f"No lock found for package {package.info.name}"
-                raise UserError(msg)
-
+        if show_lock and package.lock is not None:
             lock_tree = Tree("Locked dependencies", style="steel_blue3")
             for dep in package.lock.deps.values():
                 lock_tree.add(f"{dep.name}=={dep.version.to_str()}", style="steel_blue1")

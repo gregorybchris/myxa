@@ -89,7 +89,7 @@ def init(name: str, description: str, info: bool = False, debug: bool = False) -
 @app.command(help="Print information about the package")
 def info(
     show_deps: Annotated[bool, typer.Option("--show-deps/--no-deps")] = True,
-    show_lock: Annotated[bool, typer.Option("--show-lock/--no-lock")] = False,
+    show_lock: Annotated[bool, typer.Option("--show-lock/--no-lock")] = True,
     show_modules: Annotated[bool, typer.Option("--show-modules/--no-modules")] = True,
     info: bool = False,
     debug: bool = False,
