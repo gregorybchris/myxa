@@ -54,6 +54,9 @@ mx lock
 # Add a package dependency
 mx add <dep-name>
 
+# Add a package dependency with a specific version
+mx add <dep-name> --version 1.0
+
 # Remove a package dependency
 mx remove <dep-name>
 
