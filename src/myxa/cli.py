@@ -97,8 +97,8 @@ def lock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
-        index = load_index(manager)
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
+        index = load_index(manager)
         manager.lock(package, index)
         manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
@@ -175,7 +175,8 @@ def update(info: bool = False, debug: bool = False) -> None:
     manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
-        manager.update(package)
+        index = load_index(manager)
+        manager.update(package, index)
         manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 

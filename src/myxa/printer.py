@@ -1,7 +1,9 @@
 import builtins
 import logging
 from dataclasses import dataclass, field
+from typing import Optional
 
+import inflect
 from rich.console import Console, Group
 from rich.padding import Padding
 from rich.panel import Panel
@@ -9,7 +11,8 @@ from rich.table import Table
 from rich.tree import Tree
 
 from myxa.errors import InternalError
-from myxa.models import Const, Func, Index, Mod, Node, Package
+from myxa.extra_types import Pluralizer
+from myxa.models import Const, Func, Index, Mod, Node, Package, PackageLock
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass(kw_only=True)
 class Printer:
     console: Console = field(default_factory=Console)
+    pluralizer: Pluralizer = field(default_factory=inflect.engine)
 
     def print_error(self, msg: str) -> None:
         self.console.print(f"[bold red]{msg}")
@@ -109,3 +113,25 @@ class Printer:
             tree.add("\\[empty]", style="steel_blue1")
         panel = Panel(tree, title=index.name, border_style="black")
         self.console.print(panel)
+
+    def print_lock_diff(self, lock_1: Optional[PackageLock], lock_2: PackageLock) -> None:
+        old_deps = set(lock_1.deps.keys()) if lock_1 is not None else set()
+        new_deps = set(lock_2.deps.keys())
+
+        additions = new_deps - old_deps
+        removals = old_deps - new_deps
+
+        if not additions and not removals:
+            self.print_success("Project lock is up to date")
+        else:
+            self.print_success(
+                f"Project lock updated with"
+                f" {len(additions)} {self.pluralizer.plural_noun('addition', len(additions))}"
+                f" and {len(removals)} {self.pluralizer.plural_noun('removal', len(removals))}"
+            )
+
+        for dep_name in additions:
+            self.print_message(f"[blue]+ {dep_name}~={lock_2.deps[dep_name].version.to_str()}")
+        if lock_1 is not None:
+            for dep_name in removals:
+                self.print_message(f"[red]- {dep_name}~={lock_1.deps[dep_name].version.to_str()}")

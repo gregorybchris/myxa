@@ -101,14 +101,13 @@ class Manager:
 
     def lock(self, package: Package, index: Index) -> None:
         self.printer.print_message(f"Locking package {package.info.name}...")
+        original_lock = package.lock
+        # Check that all dependencies exist in the index before trying to resolve
         for dep in package.info.deps.values():
             index.get_package(dep.name, dep.version)
         resolver = Resolver(index=index)
         package.lock = resolver.resolve(package)
-        n_deps = len(package.lock.deps)
-        self.printer.print_success(
-            f"Locked {package.info.name} with {n_deps} {self.pluralizer.plural_noun('dependency', n_deps)}"
-        )
+        self.printer.print_lock_diff(original_lock, package.lock)
 
     def unlock(self, package: Package) -> None:
         self.printer.print_message(f"Unlocking package {package.info.name}...")
@@ -121,8 +120,15 @@ class Manager:
             f"Unlocked {package.info.name} with {n_deps} {self.pluralizer.plural_noun('dependency', n_deps)}"
         )
 
-    def update(self, package: Package) -> None:
-        raise NotImplementedError
+    def update(self, package: Package, index: Index) -> None:
+        self.printer.print_message(f"Updating dependencies for {package.info.name}...")
+        original_lock = package.lock
+        # Check that all dependencies exist in the index before trying to resolve
+        for dep in package.info.deps.values():
+            index.get_package(dep.name, dep.version)
+        resolver = Resolver(index=index)
+        package.lock = resolver.resolve(package)
+        self.printer.print_lock_diff(original_lock, package.lock)
 
     def set_version(self, package: Package, version: Version) -> None:
         self.printer.print_message(f"Setting version of package {package.info.name} to {version.to_str()}...")
