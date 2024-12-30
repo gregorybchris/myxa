@@ -40,6 +40,24 @@ class Manager:
         self.save_package(package, package_filepath)
         self.printer.print_success(f"Initialized {name} with package file at {package_filepath.absolute()}")
 
+    def info(  # noqa: PLR0913
+        self,
+        package: Package,
+        index: Index,
+        version: Optional[Version] = None,
+        show_deps: bool = True,
+        show_lock: bool = True,
+        show_interface: bool = True,
+    ) -> None:
+        if version is not None:
+            package = index.get_package(package.info.name, version)
+        self.printer.print_package(
+            package,
+            show_deps=show_deps,
+            show_lock=show_lock,
+            show_interface=show_interface,
+        )
+
     def add(self, package: Package, dep_name: str, index: Index, version: Optional[Version] = None) -> None:
         self.printer.print_message(f"Adding dependency {dep_name} to package {package.info.name}...")
         if package.info.deps.get(dep_name) and (version is None or package.info.deps[dep_name].version == version):

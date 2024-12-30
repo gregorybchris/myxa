@@ -69,7 +69,8 @@ def init(name: str, description: str, info: bool = False, debug: bool = False) -
 
 
 @app.command(help="Print information about the package")
-def info(
+def info(  # noqa: PLR0913
+    version: Optional[str] = None,
     show_deps: Annotated[bool, typer.Option("--show-deps/--no-deps")] = True,
     show_lock: Annotated[bool, typer.Option("--show-lock/--no-lock")] = True,
     show_interface: Annotated[bool, typer.Option("--show-interface/--no-interface")] = True,
@@ -80,8 +81,12 @@ def info(
     manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
-        manager.printer.print_package(
+        index = load_index(manager)
+        version_obj = Version.from_str(version) if version else None
+        manager.info(
             package,
+            index,
+            version=version_obj,
             show_deps=show_deps,
             show_lock=show_lock,
             show_interface=show_interface,

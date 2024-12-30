@@ -48,11 +48,14 @@ mx init <name> "<description>"
 # Show package info
 mx info
 
+# Show package info for a specific version
+mx info --version <version>
+
 # Add a package dependency
 mx add <dep-name>
 
 # Add a package dependency with a specific version
-mx add <dep-name> --version 1.0
+mx add <dep-name> --version <version>
 
 # Remove a package dependency
 mx remove <dep-name>
