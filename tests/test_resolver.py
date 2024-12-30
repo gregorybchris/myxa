@@ -25,6 +25,7 @@ class TestResolver:
 
         lock = resolver.resolve(app_package)
         assert lock.deps[euler_package.info.name].version == next_minor_version
+        assert len(lock.deps) == 1
 
     def test_resolve_below_next_major_version(
         self,
@@ -45,6 +46,7 @@ class TestResolver:
 
         lock = resolver.resolve(app_package)
         assert lock.deps[euler_package.info.name].version == original_version
+        assert len(lock.deps) == 1
 
     def test_resolve_incompatible_deps_raises_user_error(  # noqa: PLR0913
         self,
@@ -95,5 +97,6 @@ class TestResolver:
         manager.add(app_package, interlet_package.info.name, primary_index, interlet_package.info.version)
 
         lock = resolver.resolve(app_package)
+        assert len(lock.deps) == 3
         for package in [euler_package, flatty_package, interlet_package]:
             assert lock.deps[package.info.name].version == package.info.version
