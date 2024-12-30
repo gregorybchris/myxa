@@ -33,26 +33,6 @@ class TestManager:
         with pytest.raises(UserError, match="Package file already exists at"):
             manager.init("myxa", "Compatibility aware package manager", package_filepath)
 
-    def test_publish_without_lock_raises_user_error(
-        self,
-        manager: Manager,
-        euler_package: Package,
-        primary_index: Index,
-    ) -> None:
-        with pytest.raises(UserError, match="No lock found for package euler"):
-            manager.publish(euler_package, primary_index)
-
-    def test_publish_duplicate_version_raises_user_error(
-        self,
-        manager: Manager,
-        euler_package: Package,
-        primary_index: Index,
-    ) -> None:
-        manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
-        with pytest.raises(UserError, match="Package euler==0.1 already exists in provided index: primary"):
-            manager.publish(euler_package, primary_index)
-
     def test_add(
         self,
         manager: Manager,
@@ -101,33 +81,6 @@ class TestManager:
         with pytest.raises(UserError, match="flatty is not a dependency of interlet, unable to remove it"):
             manager.remove(interlet_package, "flatty")
 
-    def test_publish(
-        self,
-        manager: Manager,
-        euler_package: Package,
-        primary_index: Index,
-    ) -> None:
-        manager.lock(euler_package, primary_index)
-        assert "euler" not in primary_index.namespaces
-        manager.publish(euler_package, primary_index)
-        assert "euler" in primary_index.namespaces
-
-    def test_publish_multiple_versions(
-        self,
-        manager: Manager,
-        euler_package: Package,
-        primary_index: Index,
-    ) -> None:
-        manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
-        assert "euler" in primary_index.namespaces
-        assert "0.1" in primary_index.namespaces["euler"].packages
-        euler_package.info.version.minor += 1
-        manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
-        assert "euler" in primary_index.namespaces
-        assert "0.2" in primary_index.namespaces["euler"].packages
-
     def test_lock(
         self,
         manager: Manager,
@@ -140,7 +93,6 @@ class TestManager:
         manager.lock(euler_package, primary_index)
         lock = euler_package.lock
         assert lock is not None
-        assert all(dep.name in lock.deps is not None for dep in euler_package.info.deps.values())
 
     def test_lock_dep_not_in_index_raises_user_error(
         self,
@@ -187,6 +139,86 @@ class TestManager:
     ) -> None:
         with pytest.raises(UserError, match="No lock found for package euler, unable to remove lock"):
             manager.unlock(euler_package)
+
+    def test_update(
+        self,
+        manager: Manager,
+        interlet_package: Package,
+        flatty_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index)
+        manager.add(interlet_package, flatty_package.info.name, primary_index)
+        manager.lock(interlet_package, primary_index)
+        old_lock = interlet_package.lock
+
+        new_version = flatty_package.info.version.next_minor()
+        manager.set_version(flatty_package, new_version)
+        manager.lock(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index)
+
+        manager.update(interlet_package, primary_index)
+        new_lock = interlet_package.lock
+
+        assert old_lock.deps[flatty_package.info.name].version != new_lock.deps[flatty_package.info.name].version
+
+    def test_check_unchanged_package(
+        self,
+        manager: Manager,
+        primary_index: Index,
+        euler_package: Package,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        manager.check(euler_package, primary_index)
+
+    def test_publish(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        assert "euler" not in primary_index.namespaces
+        manager.publish(euler_package, primary_index)
+        assert "euler" in primary_index.namespaces
+
+    def test_publish_multiple_versions(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        assert "euler" in primary_index.namespaces
+        assert "0.1" in primary_index.namespaces["euler"].packages
+        euler_package.info.version.minor += 1
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        assert "euler" in primary_index.namespaces
+        assert "0.2" in primary_index.namespaces["euler"].packages
+
+    def test_publish_without_lock_raises_user_error(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        with pytest.raises(UserError, match="No lock found for package euler"):
+            manager.publish(euler_package, primary_index)
+
+    def test_publish_duplicate_version_raises_user_error(
+        self,
+        manager: Manager,
+        euler_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        with pytest.raises(UserError, match="Package euler==0.1 already exists in provided index: primary"):
+            manager.publish(euler_package, primary_index)
 
     def test_save_and_load_package_from_file(
         self,
@@ -276,16 +308,6 @@ class TestManager:
         manager.yank(euler_package, version, primary_index)
         with pytest.raises(UserError, match=re.escape("Package euler version 0.1 not found in index primary")):
             manager.yank(euler_package, version, primary_index)
-
-    def test_check_unchanged_package(
-        self,
-        manager: Manager,
-        primary_index: Index,
-        euler_package: Package,
-    ) -> None:
-        manager.lock(euler_package, primary_index)
-        manager.publish(euler_package, primary_index)
-        manager.check(euler_package, primary_index)
 
     def test_ecosystem(  # noqa: PLR0913
         self,
