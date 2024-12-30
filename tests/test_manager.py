@@ -1,21 +1,15 @@
 import re
 
-import inflect
 import pytest
-from rich.console import Console
 
 from myxa.errors import UserError
 from myxa.manager import Manager
 from myxa.models import Dep, Index, Package, Version
-from myxa.printer import Printer
 
 
 @pytest.fixture(scope="module", name="manager")
 def manager_fixture() -> Manager:
-    console = Console()
-    printer = Printer(console=console)
-    pluralizer = inflect.engine()
-    return Manager(printer=printer, pluralizer=pluralizer)
+    return Manager()
 
 
 class TestManager:
