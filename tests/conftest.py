@@ -1,5 +1,6 @@
 import pytest
 
+from myxa.checker import Checker
 from myxa.manager import Manager
 from myxa.models import Const, Func, Import, Index, Mod, Package, PackageInfo, Param, Type, Version
 from myxa.resolver import Resolver
@@ -163,3 +164,8 @@ def manager_fixture() -> Manager:
 @pytest.fixture(name="resolver")
 def resolver_fixture(primary_index: Index) -> Resolver:
     return Resolver(index=primary_index)
+
+
+@pytest.fixture(name="checker")
+def checker_fixture() -> Checker:
+    return Checker()

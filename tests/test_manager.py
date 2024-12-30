@@ -277,6 +277,16 @@ class TestManager:
         with pytest.raises(UserError, match=re.escape("Package euler version 0.1 not found in index primary")):
             manager.yank(euler_package, version, primary_index)
 
+    def test_check_unchanged_package(
+        self,
+        manager: Manager,
+        primary_index: Index,
+        euler_package: Package,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index)
+        manager.check(euler_package, primary_index)
+
     def test_ecosystem(  # noqa: PLR0913
         self,
         manager: Manager,

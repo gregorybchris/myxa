@@ -10,9 +10,10 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
+from myxa.checker import CompatBreak, NodeTypeChange, Removal, TypeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
-from myxa.models import Const, Func, Index, Mod, Node, Package, PackageLock
+from myxa.models import Const, Func, Index, Mod, Node, Package, PackageLock, get_node_str
 
 logger = logging.getLogger(__name__)
 
@@ -136,3 +137,37 @@ class Printer:
         if lock_1 is not None:
             for dep_name in removals:
                 self.print_message(f"[red]- {dep_name}~={lock_1.deps[dep_name].version.to_str()}")
+
+    def print_breaks(self, compat_breaks: list[CompatBreak]) -> None:
+        self.print_error(
+            f"Found {len(compat_breaks)} compatibility {self.pluralizer.plural_noun('break', len(compat_breaks))}"
+        )
+        for compat_break in compat_breaks:
+            self.print_break(compat_break)
+
+    def print_break(self, compat_break: CompatBreak) -> None:
+        match compat_break:
+            case Removal(node=node, path=path):
+                name = ".".join(path)
+                node_str = get_node_str(node)
+                self.console.print(
+                    f"[black]-[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been removed"
+                )
+            case TypeChange(node=node, old_type=old_type, new_type=new_type, path=path):
+                name = ".".join(path)
+                node_str = get_node_str(node)
+                self.console.print(
+                    f"[black]-[steel_blue3] The type of {node_str} [steel_blue1]'{name}'[steel_blue3] has changed from"
+                    f" [sandy_brown]{old_type}[steel_blue3] to [sandy_brown]{new_type}[steel_blue3]"
+                )
+            case NodeTypeChange(old_node=old_node, new_node=new_node, path=path):
+                name = ".".join(path)
+                old_node_str = get_node_str(old_node)
+                new_node_str = get_node_str(new_node)
+                self.console.print(
+                    f"[black]-[steel_blue3] The type of [steel_blue1]'{name}'[steel_blue3] has changed from"
+                    f" [sandy_brown]{old_node_str}[steel_blue3] to [sandy_brown]{new_node_str}[steel_blue3]"
+                )
+            case _:
+                msg = f"CompatBreakType {type(compat_break)} is not supported"
+                raise InternalError(msg)

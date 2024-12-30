@@ -6,6 +6,7 @@ from typing import Optional
 
 import inflect
 
+from myxa.checker import Checker
 from myxa.errors import UserError
 from myxa.extra_types import Pluralizer
 from myxa.models import Dep, Index, Package, PackageInfo, Version
@@ -93,7 +94,14 @@ class Manager:
         self.printer.print_lock_diff(original_lock, package.lock)
 
     def check(self, package: Package, index: Index) -> None:
-        raise NotImplementedError
+        self.printer.print_message(f"Checking package {package.info.name}...")
+        checker = Checker()
+        latest_package = index.get_latest_package(package.info.name)
+        breaks = checker.check(latest_package, package)
+        if len(breaks) > 0:
+            self.printer.print_breaks(breaks)
+        else:
+            self.printer.print_success(f"Checked {package.info.name}")
 
     def publish(self, package: Package, index: Index) -> None:
         version_str = package.info.version.to_str()

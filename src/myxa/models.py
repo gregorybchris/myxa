@@ -6,7 +6,7 @@ from typing import Literal, Optional, Self, Union
 
 from pydantic import BaseModel, Field
 
-from myxa.errors import UserError
+from myxa.errors import InternalError, UserError
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ class Const(BaseModel):
 
 
 class Param(BaseModel):
+    node_type: Literal["param"] = "param"
     name: str
     type: Type
 
@@ -50,7 +51,22 @@ class Mod(BaseModel):
     members: dict[str, "Node"]
 
 
-Node = Union[Const, Func, Mod]
+Node = Union[Mod, Func, Param, Const]
+
+
+def get_node_str(node: Node) -> str:
+    match node:
+        case Mod():
+            return "Mod"
+        case Func():
+            return "Func"
+        case Const():
+            return "Const"
+        case Param():
+            return "Param"
+        case _:
+            msg = f"Node type {type(node)} is not supported"
+            raise InternalError(msg)
 
 
 class Version(BaseModel):
