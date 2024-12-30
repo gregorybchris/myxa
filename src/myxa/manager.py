@@ -101,7 +101,7 @@ class Manager:
         if len(breaks) > 0:
             self.printer.print_breaks(breaks)
         else:
-            self.printer.print_success(f"Checked {package.info.name}")
+            self.printer.print_success("No compatibility breaks found")
 
     def publish(self, package: Package, index: Index) -> None:
         version_str = package.info.version.to_str()
