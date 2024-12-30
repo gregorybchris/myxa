@@ -78,7 +78,7 @@ mx index
 - Integration with Python code
 - Integration with PyPI
 - Support for optional params
-- Support for List, Dict, Tuple
+- Support for List, Dict, Tuple in functions
 - Support for dev dependencies/groups/extras
 - Support for upper bounds on dependencies
 - Support for forcing a breaking change without a breaking type signature
