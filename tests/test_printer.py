@@ -1,7 +1,6 @@
 import pytest
 from rich.console import Console
 
-from myxa.errors import UserError
 from myxa.models import Index, Package, PackageLock
 from myxa.printer import Printer
 
@@ -24,15 +23,6 @@ class TestPrinter:
         show_lock: bool,
         show_modules: bool,
     ) -> None:
-        if show_lock:
-            with pytest.raises(UserError, match="No lock found for package app"):
-                printer.print_package(
-                    app_package,
-                    show_deps=show_deps,
-                    show_lock=show_lock,
-                    show_modules=show_modules,
-                )
-
         app_package.lock = PackageLock(deps=app_package.info.deps)
         printer.print_package(
             app_package,

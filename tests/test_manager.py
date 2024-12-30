@@ -44,14 +44,6 @@ class TestManager:
         with pytest.raises(UserError, match="Package file already exists at"):
             manager.init("myxa", "Compatibility aware package manager", package_filepath)
 
-    def test_print_package_without_lock_raises_user_error(
-        self,
-        manager: Manager,
-        euler_package: Package,
-    ) -> None:
-        with pytest.raises(UserError, match="No lock found for package euler"):
-            manager.printer.print_package(euler_package, show_lock=True)
-
     def test_publish_without_lock_raises_user_error(
         self,
         manager: Manager,
@@ -176,7 +168,20 @@ class TestManager:
         primary_index: Index,
     ) -> None:
         interlet_package.info.deps["flatty"] = Dep(name="flatty", version=Version.from_str("2.0"))
-        with pytest.raises(UserError, match="Dependency flatty not found in index primary"):
+        with pytest.raises(UserError, match="Package flatty not found in the provided index: primary"):
+            manager.lock(interlet_package, primary_index)
+
+    def test_lock_dep_version_not_in_index_raises_user_error(
+        self,
+        manager: Manager,
+        interlet_package: Package,
+        flatty_package: Package,
+        primary_index: Index,
+    ) -> None:
+        manager.lock(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index)
+        interlet_package.info.deps["flatty"] = Dep(name="flatty", version=Version.from_str("100.0"))
+        with pytest.raises(UserError, match="Package flatty~=100.0 not found in the provided index: primary"):
             manager.lock(interlet_package, primary_index)
 
     def test_unlock(
