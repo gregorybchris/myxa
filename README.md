@@ -60,6 +60,9 @@ mx add <dep-name> --version 1.0
 # Remove a package dependency
 mx remove <dep-name>
 
+# Check whether there are breaking changes
+mx check
+
 # Publish to the index
 mx publish
 

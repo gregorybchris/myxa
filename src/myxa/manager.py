@@ -63,6 +63,9 @@ class Manager:
             index.namespaces[info.name] = namespace
         self.printer.print_success(f"Published {info.name} version {info.version.to_str()} to index {index.name}")
 
+    def check(self, package: Package, index: Index) -> None:
+        raise NotImplementedError
+
     def yank(self, package: Package, version: Version, index: Index) -> None:
         self.printer.print_message(f"Yanking package {package.info.name}...")
         if namespace := index.namespaces.get(package.info.name):

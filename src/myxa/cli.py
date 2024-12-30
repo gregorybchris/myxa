@@ -164,6 +164,17 @@ def publish(info: bool = False, debug: bool = False) -> None:
         save_index(manager, index)
 
 
+@app.command(help="Check if there are breaking changes")
+def check(info: bool = False, debug: bool = False) -> None:
+    set_logger_config(info, debug)
+    manager = get_manager()
+    with error_handler(manager, debug=debug):
+        package = load_package(manager)
+        index = load_index(manager)
+        manager.check(package, index)
+        save_package(manager, package)
+
+
 @app.command(help="Yank the current package from the index")
 def yank(version: str, info: bool = False, debug: bool = False) -> None:
     version_obj = Version.from_str(version)
