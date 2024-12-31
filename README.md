@@ -1,5 +1,7 @@
 <div align="center">
-  <h1>myxa</h1>
+  <img src="assets/myxa-banner.png">
+
+  <h1>Myxa</h1>
 
   <p>
     <strong>Compatibility-aware package manager</strong>
