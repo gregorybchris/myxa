@@ -86,7 +86,6 @@ mx index
 - Support for List, Dict, Tuple in functions
 - Support for dev dependencies/groups/extras
 - Support for upper bounds on dependencies
-- Support for forcing a breaking change without a breaking type signature
 - Support for specifying preferred indexes in package metadata
 
 ## Package name
