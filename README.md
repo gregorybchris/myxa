@@ -12,8 +12,6 @@
 
 ## About
 
-> Note: Myxa is just a toy project, not a full package manager. If you want this kind of behavior in your preferred package manager... me too :)
-
 Myxa has two goals:
 
 1. Enable package maintainers to safely publish packages without breaks
