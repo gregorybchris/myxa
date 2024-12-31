@@ -15,10 +15,10 @@ class TestManager:
     ) -> None:
         package_dirpath = tmp_path_factory.mktemp("package")
         package_filepath = package_dirpath / "package.json"
-        manager.init("myxa", "Compatibility aware package manager", package_filepath)
+        manager.init("myxa", "Compatibility-aware package manager", package_filepath)
         package = manager.load_package(package_filepath)
         assert package.info.name == "myxa"
-        assert package.info.description == "Compatibility aware package manager"
+        assert package.info.description == "Compatibility-aware package manager"
         assert len(package.info.deps) == 0
         assert package.lock is None
 
@@ -29,9 +29,9 @@ class TestManager:
     ) -> None:
         package_dirpath = tmp_path_factory.mktemp("package")
         package_filepath = package_dirpath / "package.json"
-        manager.init("myxa", "Compatibility aware package manager", package_filepath)
+        manager.init("myxa", "Compatibility-aware package manager", package_filepath)
         with pytest.raises(UserError, match="Package file already exists at"):
-            manager.init("myxa", "Compatibility aware package manager", package_filepath)
+            manager.init("myxa", "Compatibility-aware package manager", package_filepath)
 
     def test_add(
         self,

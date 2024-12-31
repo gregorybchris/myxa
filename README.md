@@ -2,7 +2,7 @@
   <h1>myxa</h1>
 
   <p>
-    <strong>Compatibility aware package manager</strong>
+    <strong>Compatibility-aware package manager</strong>
   </p>
 
   <hr />
