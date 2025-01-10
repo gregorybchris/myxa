@@ -50,6 +50,7 @@ class Resolver:
         return PackageLock(deps=deps)
 
     def _fill_flat_deps(self, package: Package, flat_deps: FlatDeps) -> None:
+        # TODO: Can avoid duplicating work by stopping if a dependency is already in flat_deps
         for dep_name, _ in package.info.deps.items():
             flat_deps[dep_name] = {}
             sorted_versions = sorted(self.index.list_versions(dep_name), reverse=True)
