@@ -10,7 +10,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
-from myxa.checker import CompatBreak, NodeChange, Removal, TypeChange
+from myxa.checker import Change, Removal, TreeNodeChange, VarNodeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
 from myxa.models import Const, Func, Index, Mod, Package, PackageLock, TreeNode, VarNode, get_node_str
@@ -160,23 +160,23 @@ class Printer:
             for dep_name in removals:
                 self.print_message(f"[red]- {dep_name}~={lock_1.deps[dep_name].version.to_str()}")
 
-    def print_breaks(self, compat_breaks: list[CompatBreak], latest_package: Package) -> None:
+    def print_changes(self, changes: list[Change], latest_package: Package) -> None:
         self.print_error(
-            f"Found {len(compat_breaks)} compatibility {self.pluralizer.plural_noun('break', len(compat_breaks))}"
+            f"Found {len(changes)} compatibility {self.pluralizer.plural_noun('break', len(changes))}"
             f" compared to {latest_package.info.name}=={latest_package.info.version.to_str()}"
         )
-        for compat_break in compat_breaks:
-            self.print_break(compat_break)
+        for change in changes:
+            self.print_change(change)
 
-    def print_break(self, compat_break: CompatBreak) -> None:
-        match compat_break:
+    def print_change(self, change: Change) -> None:
+        match change:
             case Removal(tree_node=node, path=path):
                 name = ".".join(path)
                 node_str = get_node_str(node)
                 self.console.print(
                     f"[black]-[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been removed"
                 )
-            case TypeChange(tree_node=node, old_var_node=old_var_node, new_var_node=new_var_node, path=path):
+            case VarNodeChange(tree_node=node, old_var_node=old_var_node, new_var_node=new_var_node, path=path):
                 node_str = get_node_str(node)
                 name = ".".join(path)
                 old_var_node_type_str = get_node_type_str(old_var_node)
@@ -186,7 +186,7 @@ class Printer:
                     f" {old_var_node_type_str}[steel_blue3]"
                     f" to {new_var_node_type_str}[steel_blue3]"
                 )
-            case NodeChange(old_tree_node=old_tree_node, new_tree_node=new_tree_node, path=path):
+            case TreeNodeChange(old_tree_node=old_tree_node, new_tree_node=new_tree_node, path=path):
                 name = ".".join(path)
                 old_tree_node_type_str = get_node_type_str(old_tree_node)
                 new_tree_node_type_str = get_node_type_str(new_tree_node)
@@ -196,5 +196,5 @@ class Printer:
                     f" to {new_tree_node_type_str}[steel_blue3]"
                 )
             case _:
-                msg = f"CompatBreakType {type(compat_break)} is not supported"
+                msg = f"ChangeType {type(change)} is not supported"
                 raise InternalError(msg)

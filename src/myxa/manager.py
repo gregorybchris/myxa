@@ -115,9 +115,9 @@ class Manager:
         self.printer.print_message(f"Checking package {package.info.name}...")
         checker = Checker()
         latest_package = index.get_latest_package(package.info.name)
-        compat_breaks = checker.check(latest_package, package)
+        compat_breaks = checker.diff(latest_package, package)
         if len(compat_breaks) > 0:
-            self.printer.print_breaks(compat_breaks, latest_package)
+            self.printer.print_changes(compat_breaks, latest_package)
         else:
             self.printer.print_success("No compatibility breaks found")
 
@@ -153,9 +153,9 @@ class Manager:
             )
 
             checker = Checker()
-            compat_breaks = checker.check(latest_package, package)
+            compat_breaks = checker.diff(latest_package, package)
             if len(compat_breaks) > 0:
-                self.printer.print_breaks(compat_breaks, latest_package)
+                self.printer.print_changes(compat_breaks, latest_package)
                 candidate_version = latest_version.next_major()
                 self.printer.print_warning(f"Will increment the major version to {candidate_version.to_str()}")
             elif major:

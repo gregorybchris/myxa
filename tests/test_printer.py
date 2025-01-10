@@ -150,8 +150,8 @@ class TestPrinter:
         euler_package.members["math"].members["sub"] = Const(name="sub", var_node=Int())
         del euler_package.members["math"].members["trig"]
 
-        compat_breaks = checker.check(original_package, euler_package)
-        printer.print_breaks(compat_breaks, original_package)
+        compat_breaks = checker.diff(original_package, euler_package)
+        printer.print_changes(compat_breaks, original_package)
 
         capture_result = capsys.readouterr()
         text_output = clean_colors(capture_result.out)
