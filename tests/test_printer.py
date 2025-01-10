@@ -6,7 +6,7 @@ from rich.console import Console
 
 from myxa.checker import Checker
 from myxa.manager import Manager
-from myxa.models import Const, Float, Index, Int, Package, PackageLock, Str
+from myxa.models import Const, Func, Index, Int, Package, PackageLock, Str
 from myxa.printer import Printer
 
 
@@ -142,7 +142,11 @@ class TestPrinter:
         original_package = deepcopy(euler_package)
         euler_package.members["math"].members["pi"].var_node = Str()
         del euler_package.members["math"].members["e"]
-        euler_package.members["math"].members["add"].params["a"].var_node = Float()
+        euler_package.members["math"].members["add"].params["b"].var_node = Func(
+            name="get_b",
+            params={},
+            return_var_node=Int(),
+        )
         euler_package.members["math"].members["sub"] = Const(name="sub", var_node=Int())
         del euler_package.members["math"].members["trig"]
 
@@ -155,8 +159,9 @@ class TestPrinter:
         expected = """Found 5 compatibility breaks compared to euler==0.1
 - The type of Const 'euler.math.pi' has changed from Float to Str
 - Const 'euler.math.e' has been removed
-- The type of Param 'euler.math.add.a' has changed from Int to Float
-- The type of 'euler.math.sub' has changed from Func to Const
+- The type of Param 'euler.math.add.b' has changed from Int to Func[[], Int]
+- The type of 'euler.math.sub' has changed from Func[[Int, Int], Int] to 
+Const[Int]
 - Mod 'euler.math.trig' has been removed
-"""
+"""  # noqa: W291
         assert text_output == expected

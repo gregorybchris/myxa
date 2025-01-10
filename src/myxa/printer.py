@@ -13,7 +13,7 @@ from rich.tree import Tree
 from myxa.checker import CompatBreak, NodeChange, Removal, TypeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
-from myxa.models import Const, Func, Index, Mod, Package, PackageLock, TreeNode, get_node_str
+from myxa.models import Const, Func, Index, Mod, Package, PackageLock, TreeNode, get_node_str, get_node_type_str
 
 logger = logging.getLogger(__name__)
 
@@ -163,18 +163,18 @@ class Printer:
                     f"[black]-[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been removed"
                 )
             case TypeChange(tree_node=node, old_var_node=old_var_node, new_var_node=new_var_node, path=path):
-                old_var_node_str = get_node_str(old_var_node)
-                new_var_node_str = get_node_str(new_var_node)
-                name = ".".join(path)
                 node_str = get_node_str(node)
+                name = ".".join(path)
+                old_var_node_str = get_node_type_str(old_var_node)
+                new_var_node_str = get_node_type_str(new_var_node)
                 self.console.print(
                     f"[black]-[steel_blue3] The type of {node_str} [steel_blue1]'{name}'[steel_blue3] has changed from"
                     f" [sandy_brown]{old_var_node_str}[steel_blue3] to [sandy_brown]{new_var_node_str}[steel_blue3]"
                 )
             case NodeChange(old_tree_node=old_tree_node, new_tree_node=new_tree_node, path=path):
                 name = ".".join(path)
-                old_tree_node_str = get_node_str(old_tree_node)
-                new_tree_node_str = get_node_str(new_tree_node)
+                old_tree_node_str = get_node_type_str(old_tree_node)
+                new_tree_node_str = get_node_type_str(new_tree_node)
                 self.console.print(
                     f"[black]-[steel_blue3] The type of [steel_blue1]'{name}'[steel_blue3] has changed from"
                     f" [sandy_brown]{old_tree_node_str}[steel_blue3] to [sandy_brown]{new_tree_node_str}[steel_blue3]"
