@@ -37,14 +37,15 @@ class NodeChange(CompatBreak):
 @dataclass
 class Checker:
     def check(self, package_old: Package, package_new: Package) -> list[CompatBreak]:
+        return list(self._check(package_old, package_new))
+
+    def _check(self, package_old: Package, package_new: Package) -> Iterator[CompatBreak]:
         package_name = package_old.info.name
-        breaks: list[CompatBreak] = []
         for member_name, member_old in package_old.members.items():
             if member_new := package_new.members.get(member_name):
-                breaks.extend(self._check_node(member_old, member_new, [package_name, member_name]))
+                yield from self._check_node(member_old, member_new, [package_name, member_name])
             else:
-                breaks.extend(self._handle_node_removed(member_old, [package_name, member_name]))
-        return breaks
+                yield from self._handle_node_removed(member_old, [package_name, member_name])
 
     def _check_node(self, node_old: Node, node_new: Node, path: Path) -> Iterator[CompatBreak]:
         for node in (node_old, node_new):
