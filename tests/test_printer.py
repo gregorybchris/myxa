@@ -6,7 +6,7 @@ from rich.console import Console
 
 from myxa.checker import Checker
 from myxa.manager import Manager
-from myxa.models import Const, Index, Package, PackageLock, Type
+from myxa.models import Const, Float, Index, Int, Package, PackageLock, Str
 from myxa.printer import Printer
 
 
@@ -140,10 +140,10 @@ class TestPrinter:
         capsys: pytest.CaptureFixture,
     ) -> None:
         original_package = deepcopy(euler_package)
-        euler_package.members["math"].members["pi"].type = Type.Str
+        euler_package.members["math"].members["pi"].var_node = Str()
         del euler_package.members["math"].members["e"]
-        euler_package.members["math"].members["add"].params["a"].type = Type.Float
-        euler_package.members["math"].members["sub"] = Const(name="sub", type=Type.Int)
+        euler_package.members["math"].members["add"].params["a"].var_node = Float()
+        euler_package.members["math"].members["sub"] = Const(name="sub", var_node=Int())
         del euler_package.members["math"].members["trig"]
 
         compat_breaks = checker.check(original_package, euler_package)

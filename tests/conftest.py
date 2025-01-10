@@ -2,7 +2,7 @@ import pytest
 
 from myxa.checker import Checker
 from myxa.manager import Manager
-from myxa.models import Const, Func, Import, Index, Mod, Package, PackageInfo, Param, Type, Version
+from myxa.models import Const, Float, Func, Import, Index, Int, Mod, Null, Package, PackageInfo, Param, Str, Version
 from myxa.resolver import Resolver
 
 
@@ -20,23 +20,23 @@ def euler_package_fixture() -> Package:
                 name="math",
                 imports=[],
                 members={
-                    "pi": Const(name="pi", type=Type.Float),
-                    "e": Const(name="e", type=Type.Float),
+                    "pi": Const(name="pi", var_node=Float()),
+                    "e": Const(name="e", var_node=Float()),
                     "add": Func(
                         name="add",
                         params={
-                            "a": Param(name="a", type=Type.Int),
-                            "b": Param(name="b", type=Type.Int),
+                            "a": Param(name="a", var_node=Int()),
+                            "b": Param(name="b", var_node=Int()),
                         },
-                        return_type=Type.Int,
+                        return_var_node=Int(),
                     ),
                     "sub": Func(
                         name="sub",
                         params={
-                            "a": Param(name="a", type=Type.Int),
-                            "b": Param(name="b", type=Type.Int),
+                            "a": Param(name="a", var_node=Int()),
+                            "b": Param(name="b", var_node=Int()),
                         },
-                        return_type=Type.Int,
+                        return_var_node=Int(),
                     ),
                     "trig": Mod(
                         name="trig",
@@ -44,18 +44,18 @@ def euler_package_fixture() -> Package:
                         members={
                             "sin": Func(
                                 name="sin",
-                                params={"x": Param(name="x", type=Type.Float)},
-                                return_type=Type.Float,
+                                params={"x": Param(name="x", var_node=Float())},
+                                return_var_node=Float(),
                             ),
                             "cos": Func(
                                 name="cos",
-                                params={"x": Param(name="x", type=Type.Float)},
-                                return_type=Type.Float,
+                                params={"x": Param(name="x", var_node=Float())},
+                                return_var_node=Float(),
                             ),
                             "tan": Func(
                                 name="tan",
-                                params={"x": Param(name="x", type=Type.Float)},
-                                return_type=Type.Float,
+                                params={"x": Param(name="x", var_node=Float())},
+                                return_var_node=Float(),
                             ),
                         },
                     ),
@@ -78,16 +78,16 @@ def flatty_package_fixture() -> Package:
             "serialize": Func(
                 name="serialize",
                 params={
-                    "data": Param(name="s", type=Type.Str),
+                    "data": Param(name="s", var_node=Str()),
                 },
-                return_type=Type.Str,
+                return_var_node=Str(),
             ),
             "deserialize": Func(
                 name="deserialize",
                 params={
-                    "data": Param(name="s", type=Type.Str),
+                    "data": Param(name="s", var_node=Str()),
                 },
-                return_type=Type.Str,
+                return_var_node=Str(),
             ),
         },
     )
@@ -112,10 +112,10 @@ def interlet_package_fixture() -> Package:
                     "serve": Func(
                         name="serve",
                         params={
-                            "host": Param(name="host", type=Type.Str),
-                            "port": Param(name="port", type=Type.Int),
+                            "host": Param(name="host", var_node=Str()),
+                            "port": Param(name="port", var_node=Int()),
                         },
-                        return_type=Type.Null,
+                        return_var_node=Null(),
                     )
                 },
             )
@@ -143,7 +143,7 @@ def app_package_fixture() -> Package:
                     "run": Func(
                         name="run",
                         params={},
-                        return_type=Type.Null,
+                        return_var_node=Null(),
                     )
                 },
             )

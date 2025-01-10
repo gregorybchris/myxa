@@ -1,7 +1,6 @@
 import logging
 import re
 from copy import deepcopy
-from enum import StrEnum
 from typing import Literal, Optional, Self, Union
 
 from pydantic import BaseModel, Field
@@ -11,31 +10,43 @@ from myxa.errors import InternalError, UserError
 logger = logging.getLogger(__name__)
 
 
-class Type(StrEnum):
-    Bool = "Bool"
-    Float = "Float"
-    Int = "Int"
-    Null = "Null"
-    Str = "Str"
+class Bool(BaseModel):
+    node_type: Literal["bool"] = "bool"
+
+
+class Float(BaseModel):
+    node_type: Literal["float"] = "float"
+
+
+class Int(BaseModel):
+    node_type: Literal["int"] = "int"
+
+
+class Null(BaseModel):
+    node_type: Literal["null"] = "null"
+
+
+class Str(BaseModel):
+    node_type: Literal["str"] = "str"
 
 
 class Const(BaseModel):
     node_type: Literal["const"] = "const"
     name: str
-    type: Type
+    var_node: "VarNode"
 
 
 class Param(BaseModel):
     node_type: Literal["param"] = "param"
     name: str
-    type: Type
+    var_node: "VarNode"
 
 
 class Func(BaseModel):
     node_type: Literal["func"] = "func"
     name: str
     params: dict[str, Param]
-    return_type: Type
+    return_var_node: "VarNode"
 
 
 class Import(BaseModel):
@@ -48,13 +59,15 @@ class Mod(BaseModel):
     node_type: Literal["mod"] = "mod"
     name: str
     imports: list[Import]
-    members: dict[str, "Node"]
+    members: dict[str, "TreeNode"]
 
 
-Node = Union[Mod, Func, Param, Const]
+TreeNode = Union[Const, Func, Mod, Param]
+
+VarNode = Union[Bool, Float, Int, Null, Str, Func]
 
 
-def get_node_str(node: Node) -> str:
+def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
     match node:
         case Mod():
             return "Mod"
@@ -64,6 +77,16 @@ def get_node_str(node: Node) -> str:
             return "Const"
         case Param():
             return "Param"
+        case Bool():
+            return "Bool"
+        case Float():
+            return "Float"
+        case Int():
+            return "Int"
+        case Null():
+            return "Null"
+        case Str():
+            return "Str"
         case _:
             msg = f"Node type {type(node)} is not supported"
             raise InternalError(msg)
@@ -126,7 +149,7 @@ class PackageLock(BaseModel):
 class Package(BaseModel):
     info: PackageInfo
     lock: Optional[PackageLock] = None
-    members: dict[str, Node]
+    members: dict[str, TreeNode]
 
 
 class Namespace(BaseModel):

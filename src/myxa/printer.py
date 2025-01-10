@@ -13,7 +13,7 @@ from rich.tree import Tree
 from myxa.checker import CompatBreak, NodeChange, Removal, TypeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
-from myxa.models import Const, Func, Index, Mod, Node, Package, PackageLock, get_node_str
+from myxa.models import Const, Func, Index, Mod, Package, PackageLock, TreeNode, get_node_str
 
 logger = logging.getLogger(__name__)
 
@@ -38,26 +38,28 @@ class Printer:
     def input(self, prompt: str) -> str:
         return self.console.input(f"[bold]{prompt}")
 
-    def _add_tree_node(self, node: Node, tree: Tree) -> None:
+    def _add_tree_node(self, tree_node: TreeNode, tree: Tree) -> None:
         type_builtin = builtins.type
-        match node:
-            case Const(name=name, type=type):
-                tree.add(f"[steel_blue1]{name}[black]: [sandy_brown]{type}")
-            case Func(name=name, params=params, return_type=return_type):
+        match tree_node:
+            case Const(name=name, var_node=var_node):
+                var_node_str = get_node_str(var_node)
+                tree.add(f"[steel_blue1]{name}[black]: [sandy_brown]{var_node_str}")
+            case Func(name=name, params=params, return_var_node=return_var_node):
+                return_var_node_str = get_node_str(return_var_node)
                 func_str = f"[steel_blue1]{name}[black]("
                 for param_name, param in params.items():
-                    func_str += f"[red]{param_name}[black]: [light_goldenrod2]{param.type}, "
+                    func_str += f"[red]{param_name}[black]: [light_goldenrod2]{param.var_node}, "
                 if len(params) > 0:
                     func_str = func_str[:-2]
                 func_str += "[black])"
-                func_str += f"[black] -> [sandy_brown]{return_type}"
+                func_str += f"[black] -> [sandy_brown]{return_var_node_str}"
                 tree.add(func_str)
             case Mod(name=name, members=members):
                 mod_tree = tree.add(name, style="purple")
                 for member in members.values():
                     self._add_tree_node(member, mod_tree)
             case _:
-                msg = f"Node type not handled: {type_builtin(node)}"
+                msg = f"Node type not handled: {type_builtin(tree_node)}"
                 raise InternalError(msg)
 
     def print_package(
@@ -154,26 +156,28 @@ class Printer:
 
     def print_break(self, compat_break: CompatBreak) -> None:
         match compat_break:
-            case Removal(node=node, path=path):
+            case Removal(tree_node=node, path=path):
                 name = ".".join(path)
                 node_str = get_node_str(node)
                 self.console.print(
                     f"[black]-[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been removed"
                 )
-            case TypeChange(node=node, old_type=old_type, new_type=new_type, path=path):
+            case TypeChange(tree_node=node, old_var_node=old_var_node, new_var_node=new_var_node, path=path):
+                old_var_node_str = get_node_str(old_var_node)
+                new_var_node_str = get_node_str(new_var_node)
                 name = ".".join(path)
                 node_str = get_node_str(node)
                 self.console.print(
                     f"[black]-[steel_blue3] The type of {node_str} [steel_blue1]'{name}'[steel_blue3] has changed from"
-                    f" [sandy_brown]{old_type}[steel_blue3] to [sandy_brown]{new_type}[steel_blue3]"
+                    f" [sandy_brown]{old_var_node_str}[steel_blue3] to [sandy_brown]{new_var_node_str}[steel_blue3]"
                 )
-            case NodeChange(old_node=old_node, new_node=new_node, path=path):
+            case NodeChange(old_tree_node=old_tree_node, new_tree_node=new_tree_node, path=path):
                 name = ".".join(path)
-                old_node_str = get_node_str(old_node)
-                new_node_str = get_node_str(new_node)
+                old_tree_node_str = get_node_str(old_tree_node)
+                new_tree_node_str = get_node_str(new_tree_node)
                 self.console.print(
                     f"[black]-[steel_blue3] The type of [steel_blue1]'{name}'[steel_blue3] has changed from"
-                    f" [sandy_brown]{old_node_str}[steel_blue3] to [sandy_brown]{new_node_str}[steel_blue3]"
+                    f" [sandy_brown]{old_tree_node_str}[steel_blue3] to [sandy_brown]{new_tree_node_str}[steel_blue3]"
                 )
             case _:
                 msg = f"CompatBreakType {type(compat_break)} is not supported"
