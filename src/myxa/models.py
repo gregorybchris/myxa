@@ -95,16 +95,16 @@ def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
 def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:
     match node:
         case Func(params=params, return_var_node=return_var_node):
-            param_node_strs = [get_node_type_str(param.var_node) for _, param in params.items()]
-            params_str = ", ".join(param_node_strs)
-            return_var_node_str = get_node_type_str(return_var_node)
-            return f"Func[[{params_str}], {return_var_node_str}]"
+            param_node_type_strs = [get_node_type_str(param.var_node) for _, param in params.items()]
+            params_str = ", ".join(param_node_type_strs)
+            return_var_node_type_str = get_node_type_str(return_var_node)
+            return f"Func[[{params_str}], {return_var_node_type_str}]"
         case Const(var_node=var_node):
-            var_node_str = get_node_type_str(var_node)
-            return f"Const[{var_node_str}]"
+            var_node_type_str = get_node_type_str(var_node)
+            return f"Const[{var_node_type_str}]"
         case Param(var_node=var_node):
-            var_node_str = get_node_type_str(var_node)
-            return f"Param[{var_node_str}]"
+            var_node_type_str = get_node_type_str(var_node)
+            return f"Param[{var_node_type_str}]"
         case _:
             return get_node_str(node)
 
