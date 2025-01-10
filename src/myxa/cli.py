@@ -181,7 +181,12 @@ def publish(
 
 
 @app.command(help="Yank the current package from the index", hidden=True)
-def yank(version: str, info: bool = False, debug: bool = False) -> None:
+def yank(
+    version: str,
+    interactive: Annotated[bool, typer.Option("--interactive/--no-interactive")] = True,
+    info: bool = False,
+    debug: bool = False,
+) -> None:
     version_obj = Version.from_str(version)
     set_logger_config(info, debug)
     manager = Manager()
@@ -189,7 +194,7 @@ def yank(version: str, info: bool = False, debug: bool = False) -> None:
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
-        manager.yank(package, version_obj, index)
+        manager.yank(package, version_obj, index, interactive=interactive)
         save_index(manager, index)
 
 

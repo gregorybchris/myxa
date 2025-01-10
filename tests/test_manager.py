@@ -284,7 +284,7 @@ class TestManager:
         manager.publish(euler_package, primary_index, interactive=False)
         new_version = euler_package.info.version
 
-        manager.yank(euler_package, old_version, primary_index)
+        manager.yank(euler_package, old_version, primary_index, interactive=False)
         assert old_version.to_str() not in primary_index.namespaces[euler_package.info.name].packages
         assert new_version.to_str() in primary_index.namespaces[euler_package.info.name].packages
 
@@ -296,7 +296,7 @@ class TestManager:
     ) -> None:
         version = euler_package.info.version
         with pytest.raises(UserError, match=re.escape("Package euler not found in index primary, unable to yank")):
-            manager.yank(euler_package, version, primary_index)
+            manager.yank(euler_package, version, primary_index, interactive=False)
 
     def test_yank_missing_version_raises_user_error(
         self,
@@ -308,9 +308,9 @@ class TestManager:
         manager.publish(euler_package, primary_index, interactive=False)
         version = euler_package.info.version
         manager.publish(euler_package, primary_index, interactive=False)
-        manager.yank(euler_package, version, primary_index)
+        manager.yank(euler_package, version, primary_index, interactive=False)
         with pytest.raises(UserError, match=re.escape("Package euler version 0.1 not found in index primary")):
-            manager.yank(euler_package, version, primary_index)
+            manager.yank(euler_package, version, primary_index, interactive=False)
 
     def test_ecosystem(  # noqa: PLR0913
         self,

@@ -192,10 +192,31 @@ class Manager:
                 f"Force published {package.info.name} version {candidate_version.to_str()} to index {index.name}"
             )
 
-    def yank(self, package: Package, version: Version, index: Index) -> None:
+    def yank(
+        self,
+        package: Package,
+        version: Version,
+        index: Index,
+        interactive: bool = True,
+    ) -> None:
         self.printer.print_message(f"Yanking package {package.info.name}...")
-        index.remove_package(package, version)
-        self.printer.print_success(f"Yanked {package.info.name} version {version.to_str()} from index {index.name}")
+
+        if interactive:
+            while response := self.printer.input("Proceed to yank? \\[y/n] "):
+                if response.lower() == "n":
+                    self.printer.print_success("Successfully aborted yanking")
+                    break
+                if response.lower() == "y":
+                    index.remove_package(package, version)
+                    self.printer.print_success(
+                        f"Yanked {package.info.name} version {version.to_str()} from index {index.name}"
+                    )
+                    break
+        else:
+            index.remove_package(package, version)
+            self.printer.print_success(
+                f"Force yanked {package.info.name} version {version.to_str()} from index {index.name}"
+            )
 
     def set_version(self, package: Package, version: Version) -> None:
         self.printer.print_message(f"Setting version of package {package.info.name} to {version.to_str()}...")
