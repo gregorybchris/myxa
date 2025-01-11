@@ -171,9 +171,10 @@ class Manager:
             )
 
             checker = Checker()
-            compat_breaks = checker.diff(latest_package, package)
-            if len(compat_breaks) > 0:
-                self.printer.print_changes(compat_breaks, latest_package)
+            changes = checker.diff(latest_package, package)
+            breaks = [change for change in changes if change.is_breaking()]
+            if len(breaks) > 0:
+                self.printer.print_changes(changes, latest_package, breaking_only=True)
                 candidate_version = latest_version.next_major()
                 self.printer.print_warning(f"Will increment the major version to {candidate_version.to_str()}")
             elif major:
