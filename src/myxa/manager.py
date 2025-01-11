@@ -111,15 +111,33 @@ class Manager:
         package.lock = resolver.resolve(package)
         self.printer.print_lock_diff(old_lock, package.lock)
 
-    def check(self, package: Package, index: Index) -> None:
+    def check(self, package: Package, index: Index, version: Optional[Version] = None) -> None:
         self.printer.print_message(f"Checking package {package.info.name}...")
+        if version is not None and version != package.info.version:
+            comparison_package = index.get_package(package.info.name, version)
+        else:
+            comparison_package = index.get_latest_package(package.info.name)
+
         checker = Checker()
-        latest_package = index.get_latest_package(package.info.name)
-        compat_breaks = checker.diff(latest_package, package)
-        if len(compat_breaks) > 0:
-            self.printer.print_changes(compat_breaks, latest_package)
+        changes = checker.diff(comparison_package, package)
+        if len(changes) > 0:
+            self.printer.print_changes(changes, comparison_package, breaking_only=True)
         else:
             self.printer.print_success("No compatibility breaks found")
+
+    def diff(self, package: Package, index: Index, version: Optional[Version] = None) -> None:
+        self.printer.print_message(f"Diffing package {package.info.name}...")
+        if version is not None and version != package.info.version:
+            comparison_package = index.get_package(package.info.name, version)
+        else:
+            comparison_package = index.get_latest_package(package.info.name)
+
+        checker = Checker()
+        changes = checker.diff(comparison_package, package)
+        if len(changes) > 0:
+            self.printer.print_changes(changes, comparison_package)
+        else:
+            self.printer.print_success("No changes found")
 
     def publish(
         self,

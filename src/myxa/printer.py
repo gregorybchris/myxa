@@ -10,7 +10,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
-from myxa.checker import Change, Removal, TreeNodeChange, VarNodeChange
+from myxa.checker import Addition, Change, Removal, TreeNodeChange, VarNodeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
 from myxa.models import Const, Func, Index, Mod, Package, PackageLock, TreeNode, VarNode, get_node_str
@@ -160,16 +160,32 @@ class Printer:
             for dep_name in removals:
                 self.print_message(f"[red]- {dep_name}~={lock_1.deps[dep_name].version.to_str()}")
 
-    def print_changes(self, changes: list[Change], latest_package: Package) -> None:
-        self.print_error(
-            f"Found {len(changes)} compatibility {self.pluralizer.plural_noun('break', len(changes))}"
-            f" compared to {latest_package.info.name}=={latest_package.info.version.to_str()}"
-        )
+    def print_changes(self, changes: list[Change], comparison_package: Package, breaking_only: bool = False) -> None:
+        changes = [change for change in changes if not breaking_only or change.is_breaking()]
+
+        if breaking_only:
+            self.print_error(
+                f"Found {len(changes)} compatibility {self.pluralizer.plural_noun('break', len(changes))}"
+                f" compared to {comparison_package.info.name}=={comparison_package.info.version.to_str()}"
+            )
+        else:
+            self.print_message(
+                f"Found {len(changes)} {self.pluralizer.plural_noun('change', len(changes))}"
+                f" compared to {comparison_package.info.name}=={comparison_package.info.version.to_str()}"
+            )
+
         for change in changes:
-            self.print_change(change)
+            if not breaking_only or change.is_breaking():
+                self.print_change(change)
 
     def print_change(self, change: Change) -> None:
         match change:
+            case Addition(tree_node=node, path=path):
+                name = ".".join(path)
+                node_str = get_node_str(node)
+                self.console.print(
+                    f"[black]+[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been added"
+                )
             case Removal(tree_node=node, path=path):
                 name = ".".join(path)
                 node_str = get_node_str(node)
@@ -196,5 +212,5 @@ class Printer:
                     f" to {new_tree_node_type_str}[steel_blue3]"
                 )
             case _:
-                msg = f"ChangeType {type(change)} is not supported"
+                msg = f"Change type {type(change)} is not supported"
                 raise InternalError(msg)

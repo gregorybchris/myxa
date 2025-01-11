@@ -6,7 +6,7 @@ from rich.console import Console
 
 from myxa.checker import Checker
 from myxa.manager import Manager
-from myxa.models import Const, Func, Index, Int, Package, PackageLock, Str
+from myxa.models import Const, Float, Func, Index, Int, Package, PackageLock, Str
 from myxa.printer import Printer
 
 
@@ -149,17 +149,54 @@ class TestPrinter:
         )
         euler_package.members["math"].members["sub"] = Const(name="sub", var_node=Int())
         del euler_package.members["math"].members["trig"]
+        euler_package.members["math"].members["phi"] = Const(name="phi", var_node=Float())
 
         compat_breaks = checker.diff(original_package, euler_package)
-        printer.print_changes(compat_breaks, original_package)
+        printer.print_changes(compat_breaks, original_package, breaking_only=True)
 
         capture_result = capsys.readouterr()
         text_output = clean_colors(capture_result.out)
 
         expected = """Found 5 compatibility breaks compared to euler==0.1
-- The type of Const 'euler.math.pi' has changed from Float to Str
-- Const 'euler.math.e' has been removed
 - The type of Param 'euler.math.add.b' has changed from Int to Func[[], Int]
+- Const 'euler.math.e' has been removed
+- The type of Const 'euler.math.pi' has changed from Float to Str
+- The type of 'euler.math.sub' has changed from Func[[Int, Int], Int] to 
+Const[Int]
+- Mod 'euler.math.trig' has been removed
+"""  # noqa: W291
+        assert text_output == expected
+
+    def test_print_diff(
+        self,
+        printer: Printer,
+        euler_package: Package,
+        checker: Checker,
+        capsys: pytest.CaptureFixture,
+    ) -> None:
+        original_package = deepcopy(euler_package)
+        euler_package.members["math"].members["pi"].var_node = Str()
+        del euler_package.members["math"].members["e"]
+        euler_package.members["math"].members["add"].params["b"].var_node = Func(
+            name="get_b",
+            params={},
+            return_var_node=Int(),
+        )
+        euler_package.members["math"].members["sub"] = Const(name="sub", var_node=Int())
+        del euler_package.members["math"].members["trig"]
+        euler_package.members["math"].members["phi"] = Const(name="phi", var_node=Float())
+
+        compat_breaks = checker.diff(original_package, euler_package)
+        printer.print_changes(compat_breaks, original_package, breaking_only=False)
+
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+
+        expected = """Found 6 changes compared to euler==0.1
+- The type of Param 'euler.math.add.b' has changed from Int to Func[[], Int]
+- Const 'euler.math.e' has been removed
++ Const 'euler.math.phi' has been added
+- The type of Const 'euler.math.pi' has changed from Float to Str
 - The type of 'euler.math.sub' has changed from Func[[Int, Int], Int] to 
 Const[Int]
 - Mod 'euler.math.trig' has been removed

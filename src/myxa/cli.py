@@ -153,14 +153,33 @@ def update(info: bool = False, debug: bool = False) -> None:
 
 
 @app.command(help="Check if there are breaking changes")
-def check(info: bool = False, debug: bool = False) -> None:
+def check(
+    version: Optional[str] = None,
+    info: bool = False,
+    debug: bool = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
-        manager.check(package, index)
-        manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
+        version_obj = Version.from_str(version) if version else None
+        manager.check(package, index, version=version_obj)
+
+
+@app.command(help="Check if there are changes in the package")
+def diff(
+    version: Optional[str] = None,
+    info: bool = False,
+    debug: bool = False,
+) -> None:
+    set_logger_config(info, debug)
+    manager = Manager()
+    with error_handler(manager, debug=debug):
+        package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
+        index = load_index(manager)
+        version_obj = Version.from_str(version) if version else None
+        manager.diff(package, index, version=version_obj)
 
 
 @app.command(help="Publish the current package to the index")

@@ -69,6 +69,15 @@ mx update
 # Check whether there are breaking changes
 mx check
 
+# Check whether there are breaking changes, comparing with a specific version
+mx check --version <version>
+
+# Check for any changes in a package
+mx diff
+
+# Check for any changes, comparing with a specific version
+mx diff --version <version>
+
 # Publish to the index
 mx publish
 
