@@ -13,22 +13,28 @@ from rich.tree import Tree
 from myxa.checker import Addition, Change, Removal, TreeNodeChange, VarNodeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
-from myxa.models import Const, Enum, Func, Index, Mod, Package, PackageLock, Struct, TreeNode, VarNode, get_node_str
-from myxa.models import get_node_type_str as get_raw_node_type_str
+from myxa.models import (
+    Bool,
+    Const,
+    Enum,
+    Field,
+    Float,
+    Func,
+    Index,
+    Int,
+    Mod,
+    Null,
+    Package,
+    PackageLock,
+    Param,
+    Str,
+    Struct,
+    TreeNode,
+    Variant,
+    VarNode,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:
-    raw_node_type_str = get_raw_node_type_str(node)
-    formatted = ""
-    symbol_chars = ",[]()"
-    for c in raw_node_type_str:
-        if c in symbol_chars:
-            formatted += f"[black]{c}"
-        else:
-            formatted += f"[light_goldenrod2]{c}"
-    return formatted
 
 
 @dataclass(kw_only=True)
@@ -55,24 +61,24 @@ class Printer:
         type_builtin = builtins.type
         match tree_node:
             case Const(name=name, var_node=var_node):
-                var_node_type_str = get_node_type_str(var_node)
+                var_node_type_str = self.get_node_type_str(var_node)
                 tree.add(f"[steel_blue1]{name}[black]: {var_node_type_str}")
             case Struct(name=name, fields=fields):
                 struct_tree = tree.add(name, style="steel_blue1")
                 for field_name, field_node in fields.items():
-                    field_node_type_str = get_node_type_str(field_node.var_node)
+                    field_node_type_str = self.get_node_type_str(field_node.var_node)
                     struct_tree.add(f"[red]{field_name}[black]: {field_node_type_str}")
             case Enum(name=name, variants=variants):
                 enum_tree = tree.add(name, style="steel_blue1")
                 for variant_name, variant_node in variants.items():
-                    variant_node_type_str = get_node_type_str(variant_node.var_node)
+                    variant_node_type_str = self.get_node_type_str(variant_node.var_node)
                     enum_tree.add(f"[red]{variant_name}[black]: {variant_node_type_str}")
             case Func(name=name, params=params, return_var_node=return_var_node):
-                return_var_node_type_str = get_node_type_str(return_var_node)
+                return_var_node_type_str = self.get_node_type_str(return_var_node)
                 func_str = f"[steel_blue1]{name}[black]("
                 for param_name, param in params.items():
-                    var_node_type_str = get_node_type_str(param.var_node)
-                    func_str += f"[red]{param_name}[black]: {var_node_type_str}, "
+                    var_node_type_str = self.get_node_type_str(param.var_node)
+                    func_str += f"[red]{param_name}[black]: {var_node_type_str}[black], "
                 if len(params) > 0:
                     func_str = func_str[:-2]
                 func_str += "[black])"
@@ -112,10 +118,10 @@ class Printer:
                 if index is not None:
                     latest_dep_package = index.get_latest_package(dep.name)
                     is_latest_major = dep.version.major == latest_dep_package.info.version.major
-                    version_color = "green" if is_latest_major else "sandy_brown"
+                    version_color = "[green]" if is_latest_major else "[sandy_brown]"
                 else:
-                    version_color = "white"
-                deps_tree.add(f"[steel_blue1]{dep.name}[black]~=[{version_color}]{dep.version.to_str()}")
+                    version_color = "[white]"
+                deps_tree.add(f"[steel_blue1]{dep.name}[black]~={version_color}{dep.version.to_str()}")
             if not info.deps:
                 deps_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, deps_tree)
@@ -126,10 +132,10 @@ class Printer:
                 if index is not None:
                     latest_dep_package = index.get_latest_package(dep.name)
                     is_latest_major = dep.version.major == latest_dep_package.info.version.major
-                    version_color = "green" if is_latest_major else "sandy_brown"
+                    version_color = "[green]" if is_latest_major else "[sandy_brown]"
                 else:
-                    version_color = "white"
-                lock_tree.add(f"[steel_blue1]{dep.name}[black]==[{version_color}]{dep.version.to_str()}")
+                    version_color = "[white]"
+                lock_tree.add(f"[steel_blue1]{dep.name}[black]=={version_color}{dep.version.to_str()}")
             if not package.lock.deps:
                 lock_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, lock_tree)
@@ -156,11 +162,11 @@ class Printer:
                     for package in sorted_packages:
                         if index is not None:
                             is_latest_major = package.info.version.major == sorted_packages[-1].info.version.major
-                            version_color = "green" if is_latest_major else "sandy_brown"
+                            version_color = "[green]" if is_latest_major else "[sandy_brown]"
                         else:
-                            version_color = "white"
+                            version_color = "[white]"
                         namespace_tree.add(
-                            f"[steel_blue3]{package.info.name}[black]==[{version_color}]{package.info.version.to_str()}"
+                            f"[steel_blue3]{package.info.name}[black]=={version_color}{package.info.version.to_str()}"
                         )
                     if not namespace.packages:
                         namespace_tree.add("\\[none]", style="steel_blue3")
@@ -213,21 +219,21 @@ class Printer:
         match change:
             case Addition(tree_node=tree_node, path=path):
                 name = ".".join(path)
-                node_str = get_node_str(tree_node)
+                node_str = self.get_node_str(tree_node)
                 self.console.print(
                     f"[black]+[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been added"
                 )
             case Removal(tree_node=tree_node, path=path):
                 name = ".".join(path)
-                node_str = get_node_str(tree_node)
+                node_str = self.get_node_str(tree_node)
                 self.console.print(
                     f"[black]-[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been removed"
                 )
             case VarNodeChange(tree_node=tree_node, old_var_node=old_var_node, new_var_node=new_var_node, path=path):
-                node_str = get_node_str(tree_node)
+                node_str = self.get_node_str(tree_node)
                 name = ".".join(path)
-                old_var_node_type_str = get_node_type_str(old_var_node)
-                new_var_node_type_str = get_node_type_str(new_var_node)
+                old_var_node_type_str = self.get_node_type_str(old_var_node)
+                new_var_node_type_str = self.get_node_type_str(new_var_node)
                 return_type_str = "return " if isinstance(tree_node, Func) else ""
 
                 self.console.print(
@@ -238,8 +244,8 @@ class Printer:
                 )
             case TreeNodeChange(old_tree_node=old_tree_node, new_tree_node=new_tree_node, path=path):
                 name = ".".join(path)
-                old_tree_node_type_str = get_node_type_str(old_tree_node)
-                new_tree_node_type_str = get_node_type_str(new_tree_node)
+                old_tree_node_type_str = self.get_node_type_str(old_tree_node)
+                new_tree_node_type_str = self.get_node_type_str(new_tree_node)
                 self.console.print(
                     f"[black]-[steel_blue3] The type of [steel_blue1]'{name}'[steel_blue3] has changed from"
                     f" {old_tree_node_type_str}[steel_blue3]"
@@ -248,3 +254,70 @@ class Printer:
             case _:
                 msg = f"Change type {type(change)} is not supported"
                 raise InternalError(msg)
+
+    def get_node_str(self, node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911, PLR0912
+        match node:
+            case Mod():
+                return "Mod"
+            case Struct():
+                return "Struct"
+            case Field():
+                return "Field"
+            case Enum():
+                return "Enum"
+            case Variant():
+                return "Variant"
+            case Func():
+                return "Func"
+            case Const():
+                return "Const"
+            case Param():
+                return "Param"
+            case Bool():
+                return "Bool"
+            case Float():
+                return "Float"
+            case Int():
+                return "Int"
+            case Null():
+                return "Null"
+            case Str():
+                return "Str"
+            case _:
+                msg = f"Node type {type(node)} is not supported"
+                raise InternalError(msg)
+
+    def get_node_type_str(self, node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
+        g = "[light_goldenrod2]"
+        s = "[sandy_brown]"
+        b = "[black]"
+        match node:
+            case Struct(name=name, fields=fields):
+                field_node_type_strs = [self.get_node_type_str(field) for field in fields.values()]
+                fields_str = f"{b}, ".join(field_node_type_strs)
+                return f"{g}Struct{b}({s}{name}{b})[{fields_str}{b}]"
+            case Field(name=name, var_node=var_node):
+                var_node_type_str = self.get_node_type_str(var_node)
+                return f"{s}{name}{b}({s}{var_node_type_str}{b})"
+            case Enum(name=name, variants=variants):
+                variant_node_type_strs = [self.get_node_type_str(variant) for variant in variants.values()]
+                variants_str = f"{b}, ".join(variant_node_type_strs)
+                return f"{g}Enum{b}({s}{name}{b})[{variants_str}{b}]"
+            case Variant(name=name, var_node=var_node):
+                var_node_type_str = self.get_node_type_str(var_node)
+                if var_node.node_type == "null":
+                    return f"{s}{name}"
+                return f"{s}{name}{b}({s}{var_node_type_str}{b})"
+            case Func(params=params, return_var_node=return_var_node):
+                param_node_type_strs = [self.get_node_type_str(param.var_node) for _, param in params.items()]
+                params_str = f"{b}, ".join(param_node_type_strs)
+                return_var_node_type_str = self.get_node_type_str(return_var_node)
+                return f"{g}Func{b}[[{g}{params_str}{b}], {g}{return_var_node_type_str}{b}]"
+            case Param(var_node=var_node):
+                var_node_type_str = self.get_node_type_str(var_node)
+                return f"{g}Param{b}[{g}{var_node_type_str}{b}]"
+            case Const(var_node=var_node):
+                var_node_type_str = self.get_node_type_str(var_node)
+                return f"{g}Const{b}[{g}{var_node_type_str}{b}]"
+            case _:
+                return f"{g}{self.get_node_str(node)}"

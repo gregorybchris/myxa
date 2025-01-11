@@ -6,7 +6,22 @@ from rich.console import Console
 
 from myxa.checker import Checker
 from myxa.manager import Manager
-from myxa.models import Const, Float, Func, Index, Int, Package, PackageLock, Str
+from myxa.models import (
+    Const,
+    Enum,
+    Field,
+    Float,
+    Func,
+    Index,
+    Int,
+    Null,
+    Package,
+    PackageLock,
+    Param,
+    Str,
+    Struct,
+    Variant,
+)
 from myxa.printer import Printer
 
 
@@ -202,3 +217,92 @@ Const[Int]
 - Mod 'euler.math.trig' has been removed
 """  # noqa: W291
         assert text_output == expected
+
+    def test_get_node_type_str_const_int(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        const_node = Const(name="pi", var_node=Int())
+        const_node_str = printer.get_node_type_str(const_node)
+        printer.print_message(const_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Const[Int]\n"
+
+    def test_get_node_type_str_func(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        func_node = Func(
+            name="add",
+            params={
+                "a": Param(name="a", var_node=Int()),
+            },
+            return_var_node=Func(
+                name="curried_add",
+                params={
+                    "b": Param(name="b", var_node=Int()),
+                },
+                return_var_node=Int(),
+            ),
+        )
+
+        func_node_str = printer.get_node_type_str(func_node)
+        printer.print_message(func_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Func[[Int], Func[[Int], Int]]\n"
+
+    def test_get_node_type_str_const_func(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        func_node = Func(
+            name="add",
+            params={
+                "a": Param(name="a", var_node=Int()),
+                "b": Param(name="b", var_node=Int()),
+            },
+            return_var_node=Int(),
+        )
+        const_node = Const(name="add", var_node=func_node)
+        const_node_str = printer.get_node_type_str(const_node)
+        printer.print_message(const_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Const[Func[[Int, Int], Int]]\n"
+
+    def test_get_node_type_str_enum(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        enum_node = Enum(
+            name="Color",
+            variants={
+                "Red": Variant(name="Red", var_node=Int()),
+                "Green": Variant(name="Green", var_node=Int()),
+                "Blue": Variant(name="Blue", var_node=Int()),
+            },
+        )
+        enum_node_str = printer.get_node_type_str(enum_node)
+        printer.print_message(enum_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Enum(Color)[Red(Int), Green(Int), Blue(Int)]\n"
+
+    def test_get_node_type_str_enum_with_nulls(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        enum_node = Enum(
+            name="Parity",
+            variants={
+                "Odd": Variant(name="Odd", var_node=Null()),
+                "Even": Variant(name="Even", var_node=Null()),
+            },
+        )
+        enum_node_str = printer.get_node_type_str(enum_node)
+        printer.print_message(enum_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Enum(Parity)[Odd, Even]\n"
+
+    def test_get_node_type_str_struct(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        enum_node = Struct(
+            name="Generator",
+            fields={
+                "mod": Field(name="mod", var_node=Int()),
+                "mult": Field(name="mult", var_node=Int()),
+                "inc": Field(name="inc", var_node=Int()),
+            },
+        )
+        enum_node_str = printer.get_node_type_str(enum_node)
+        printer.print_message(enum_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Struct(Generator)[mod(Int), mult(Int), inc(Int)]\n"

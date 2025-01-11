@@ -6,7 +6,7 @@ from typing import Literal, Optional, Self, Union
 from pydantic import BaseModel
 from pydantic import Field as PydanticField
 
-from myxa.errors import InternalError, UserError
+from myxa.errors import UserError
 
 logger = logging.getLogger(__name__)
 
@@ -92,72 +92,6 @@ TreeNode = Union[Mod, Struct, Field, Enum, Variant, Func, Param, Const]
 
 # Nodes that be passed as a type
 VarNode = Union[Bool, Enum, Float, Func, Int, Null, Str, Struct]
-
-
-def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911, PLR0912
-    match node:
-        case Mod():
-            return "Mod"
-        case Struct():
-            return "Struct"
-        case Field():
-            return "Field"
-        case Enum():
-            return "Enum"
-        case Variant():
-            return "Variant"
-        case Func():
-            return "Func"
-        case Const():
-            return "Const"
-        case Param():
-            return "Param"
-        case Bool():
-            return "Bool"
-        case Float():
-            return "Float"
-        case Int():
-            return "Int"
-        case Null():
-            return "Null"
-        case Str():
-            return "Str"
-        case _:
-            msg = f"Node type {type(node)} is not supported"
-            raise InternalError(msg)
-
-
-def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
-    match node:
-        case Struct(name=name, fields=fields):
-            field_node_type_strs = [get_node_type_str(field) for field in fields.values()]
-            fields_str = ", ".join(field_node_type_strs)
-            return f"Struct({name})[{fields_str}]"
-        case Field(name=name, var_node=var_node):
-            var_node_type_str = get_node_type_str(var_node)
-            return f"{name}({var_node_type_str})"
-        case Enum(name=name, variants=variants):
-            variant_node_type_strs = [get_node_type_str(variant) for variant in variants.values()]
-            variants_str = ", ".join(variant_node_type_strs)
-            return f"Enum({name})[{variants_str}]"
-        case Variant(name=name, var_node=var_node):
-            var_node_type_str = get_node_type_str(var_node)
-            if var_node.node_type == "null":
-                return f"{name}"
-            return f"{name}({var_node_type_str})"
-        case Func(params=params, return_var_node=return_var_node):
-            param_node_type_strs = [get_node_type_str(param.var_node) for _, param in params.items()]
-            params_str = ", ".join(param_node_type_strs)
-            return_var_node_type_str = get_node_type_str(return_var_node)
-            return f"Func[[{params_str}], {return_var_node_type_str}]"
-        case Param(var_node=var_node):
-            var_node_type_str = get_node_type_str(var_node)
-            return f"Param[{var_node_type_str}]"
-        case Const(var_node=var_node):
-            var_node_type_str = get_node_type_str(var_node)
-            return f"Const[{var_node_type_str}]"
-        case _:
-            return get_node_str(node)
 
 
 class Version(BaseModel):
