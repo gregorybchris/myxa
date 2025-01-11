@@ -86,7 +86,7 @@ class Printer:
                 msg = f"Node type not handled: {type_builtin(tree_node)}"
                 raise InternalError(msg)
 
-    def print_package(
+    def print_package(  # noqa: PLR0912
         self,
         package: Package,
         show_deps: bool = True,
