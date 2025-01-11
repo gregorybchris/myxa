@@ -134,7 +134,7 @@ def lock(info: bool = False, debug: bool = False) -> None:
 def unlock(info: bool = False, debug: bool = False) -> None:
     set_logger_config(info, debug)
     manager = Manager()
-    manager.printer.print_warning("yank is not a supported Myxa command!")
+    manager.printer.print_warning("warning: unlock is not a supported Myxa command!")
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         manager.unlock(package)
@@ -209,7 +209,7 @@ def yank(
     version_obj = Version.from_str(version)
     set_logger_config(info, debug)
     manager = Manager()
-    manager.printer.print_warning("yank is not a supported Myxa command!")
+    manager.printer.print_warning("warning: yank is not a supported Myxa command!")
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)

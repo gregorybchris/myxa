@@ -53,7 +53,7 @@ class Printer:
         self.console.print(f"[bold green]{msg}")
 
     def print_warning(self, msg: str) -> None:
-        self.console.print(f"[bold red]{msg}")
+        self.console.print(f"[bold bright_yellow]{msg}")
 
     def print_error(self, msg: str) -> None:
         self.console.print(f"[bold red]{msg}")
