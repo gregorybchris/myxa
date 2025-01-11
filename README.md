@@ -83,8 +83,14 @@ mx diff --version <version>
 # Publish to the index
 mx publish
 
-# Show index info
+# List all versions of all packages in the index
 mx index
+
+# List all packages in the index
+mx index --no-versions
+
+# List all versions of one package in the index
+mx index --package <package_name>
 ```
 
 ### Unsupported features

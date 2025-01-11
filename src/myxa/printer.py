@@ -146,16 +146,24 @@ class Printer:
         panel = Panel(group, title=info.name, border_style="black")
         self.console.print(panel)
 
-    def print_index(self, index: Index, show_versions: bool = True) -> None:
+    def print_index(self, index: Index, package_name: Optional[str] = None, show_versions: bool = True) -> None:
         tree = Tree(index.name, style="purple")
         for namespace in index.namespaces.values():
-            namespace_tree = tree.add(namespace.name, style="steel_blue1")
-            if show_versions:
-                sorted_packages = sorted(namespace.packages.values(), key=lambda p: p.info.version)
-                for package in sorted_packages:
-                    namespace_tree.add(f"{package.info.name}=={package.info.version.to_str()}", style="steel_blue3")
-                if not namespace.packages:
-                    namespace_tree.add("\\[none]", style="steel_blue3")
+            if package_name is None or package_name == namespace.name:
+                namespace_tree = tree.add(namespace.name, style="steel_blue1")
+                if show_versions:
+                    sorted_packages = sorted(namespace.packages.values(), key=lambda p: p.info.version)
+                    for package in sorted_packages:
+                        if index is not None:
+                            is_latest_major = package.info.version.major == sorted_packages[-1].info.version.major
+                            version_color = "green" if is_latest_major else "sandy_brown"
+                        else:
+                            version_color = "white"
+                        namespace_tree.add(
+                            f"[steel_blue3]{package.info.name}[black]==[{version_color}]{package.info.version.to_str()}"
+                        )
+                    if not namespace.packages:
+                        namespace_tree.add("\\[none]", style="steel_blue3")
         if not index.namespaces:
             tree.add("\\[empty]", style="steel_blue1")
         panel = Panel(tree, title=index.name, border_style="black")

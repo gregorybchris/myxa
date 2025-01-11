@@ -219,6 +219,7 @@ def yank(
 
 @app.command(help="List all packages in the index")
 def index(
+    package_name: Annotated[Optional[str], typer.Option("--package")] = None,
     show_versions: Annotated[bool, typer.Option("--show-versions/--no-versions")] = True,
     info: bool = False,
     debug: bool = False,
@@ -227,7 +228,7 @@ def index(
     manager = Manager()
     with error_handler(manager, debug=debug):
         index = load_index(manager)
-        manager.printer.print_index(index, show_versions=show_versions)
+        manager.printer.print_index(index, package_name=package_name, show_versions=show_versions)
 
 
 @app.command(help="Set the version of the package", hidden=True)
