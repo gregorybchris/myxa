@@ -22,6 +22,7 @@ from myxa.models import (
     Func,
     Index,
     Int,
+    MemberNode,
     Mod,
     Null,
     Package,
@@ -29,7 +30,6 @@ from myxa.models import (
     Param,
     Str,
     Struct,
-    TreeNode,
     Variant,
     VarNode,
 )
@@ -57,7 +57,7 @@ class Printer:
     def input(self, prompt: str) -> str:
         return self.console.input(f"[bold]{prompt}")
 
-    def _add_tree_node(self, tree_node: TreeNode, tree: Tree) -> None:
+    def _add_tree_node(self, tree_node: MemberNode, tree: Tree) -> None:
         type_builtin = builtins.type
         match tree_node:
             case Const(name=name, var_node=var_node):
@@ -255,7 +255,7 @@ class Printer:
                 msg = f"Change type {type(change)} is not supported"
                 raise InternalError(msg)
 
-    def get_node_str(self, node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911, PLR0912
+    def get_node_str(self, node: Union[MemberNode, VarNode]) -> str:  # noqa: PLR0911, PLR0912
         match node:
             case Mod():
                 return "Mod"
@@ -287,7 +287,7 @@ class Printer:
                 msg = f"Node type {type(node)} is not supported"
                 raise InternalError(msg)
 
-    def get_node_type_str(self, node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
+    def get_node_type_str(self, node: Union[MemberNode, VarNode]) -> str:  # noqa: PLR0911
         g = "[light_goldenrod2]"
         s = "[sandy_brown]"
         b = "[black]"

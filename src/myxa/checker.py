@@ -1,24 +1,19 @@
 import logging
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Iterator, get_args
 
 from pydantic import BaseModel
 
 from myxa.errors import InternalError
 from myxa.models import (
-    Bool,
     Const,
     Enum,
     Field,
-    Float,
     Func,
-    Int,
     MemberNode,
     Mod,
-    Null,
     Package,
     Param,
-    Str,
     Struct,
     TreeNode,
     Variant,
@@ -76,19 +71,24 @@ class Checker:
         for member_name in all_member_names:
             member_path = [*path, member_name]
             if member_name in old_member_names and member_name in new_member_names:
-                yield from self._diff_tree_node(members_old[member_name], members_new[member_name], member_path)
+                yield from self._diff_member_node(members_old[member_name], members_new[member_name], member_path)
             elif member_name in old_member_names:
                 yield from self._handle_tree_node_removal(members_old[member_name], member_path)
             else:
                 yield from self._handle_tree_node_addition(members_new[member_name], member_path)
 
-    def _diff_tree_node(self, tree_node_old: TreeNode, tree_node_new: TreeNode, path: Path) -> Iterator[Change]:
-        for node in (tree_node_old, tree_node_new):
-            if not isinstance(node, (Mod, Struct, Enum, Func, Const)):
-                msg = f"Invalid tree node type {type(node)}, not permitted"
+    def _diff_member_node(
+        self,
+        member_node_old: MemberNode,
+        member_node_new: MemberNode,
+        path: Path,
+    ) -> Iterator[Change]:
+        for node in (member_node_old, member_node_new):
+            if not isinstance(node, get_args(MemberNode)):
+                msg = f"Invalid MemberNode type {type(node)}"
                 raise InternalError(msg)
 
-        match tree_node_old, tree_node_new:
+        match member_node_old, member_node_new:
             case (Mod() as mod_old, Mod() as mod_new):
                 yield from self._diff_mod(mod_old, mod_new, path)
             case (Struct() as struct_old, Struct() as struct_new):
@@ -100,7 +100,7 @@ class Checker:
             case (Const() as const_old, Const() as const_new):
                 yield from self._diff_const(const_old, const_new, path)
             case _:
-                yield TreeNodeChange(old_tree_node=tree_node_old, new_tree_node=tree_node_new, path=path)
+                yield TreeNodeChange(old_tree_node=member_node_old, new_tree_node=member_node_new, path=path)
 
     def _diff_mod(self, mod_old: Mod, mod_new: Mod, path: Path) -> Iterator[Change]:
         yield from self._diff_members(mod_old.members, mod_new.members, path)
@@ -122,17 +122,19 @@ class Checker:
         yield from self._diff_var_node(field_old, field_old.var_node, field_new.var_node, path)
 
     def _diff_enum(self, enum_old: Enum, enum_new: Enum, path: Path) -> Iterator[Change]:
-        old_field_names = set(enum_old.variants.keys())
-        new_field_names = set(enum_new.variants.keys())
-        all_field_names = sorted(old_field_names.union(new_field_names))
-        for field_name in all_field_names:
-            field_path = [*path, field_name]
-            if field_name in old_field_names and field_name in new_field_names:
-                yield from self._diff_variant(enum_old.variants[field_name], enum_new.variants[field_name], field_path)
-            elif field_name in old_field_names:
-                yield from self._handle_tree_node_removal(enum_old.variants[field_name], field_path)
+        old_variant_names = set(enum_old.variants.keys())
+        new_variant_names = set(enum_new.variants.keys())
+        all_variant_names = sorted(old_variant_names.union(new_variant_names))
+        for variant_name in all_variant_names:
+            variant_path = [*path, variant_name]
+            if variant_name in old_variant_names and variant_name in new_variant_names:
+                yield from self._diff_variant(
+                    enum_old.variants[variant_name], enum_new.variants[variant_name], variant_path
+                )
+            elif variant_name in old_variant_names:
+                yield from self._handle_tree_node_removal(enum_old.variants[variant_name], variant_path)
             else:
-                yield from self._handle_tree_node_addition(enum_new.variants[field_name], field_path)
+                yield from self._handle_tree_node_addition(enum_new.variants[variant_name], variant_path)
 
     def _diff_variant(self, variant_old: Variant, variant_new: Variant, path: Path) -> Iterator[Change]:
         yield from self._diff_var_node(variant_old, variant_old.var_node, variant_new.var_node, path)
@@ -172,20 +174,31 @@ class Checker:
         path: Path,
     ) -> Iterator[Change]:
         for node in (var_node_old, var_node_new):
-            if not isinstance(node, (Bool, Enum, Float, Func, Int, Null, Str, Struct, Variant)):
-                msg = f"Invalid var node type {type(node)}, not permitted"
+            if not isinstance(node, get_args(VarNode)):
+                msg = f"Invalid VarNode type {type(node)}"
                 raise InternalError(msg)
 
         match var_node_old, var_node_new:
             case (Struct() as struct_old, Struct() as struct_new):
-                yield from self._diff_struct(struct_old, struct_new, path)
+                yield from self._diff_struct(struct_old, struct_new, [*path, struct_old.name])
             case (Enum() as enum_old, Enum() as enum_new):
-                yield from self._diff_enum(enum_old, enum_new, path)
+                yield from self._diff_enum(enum_old, enum_new, [*path, enum_old.name])
+            case (Func() as func_old, Func() as func_new):
+                yield from self._diff_func(func_old, func_new, [*path, func_old.name])
             case _:
-                if var_node_old != var_node_new:
+                if var_node_old.node_type != var_node_new.node_type:
                     yield VarNodeChange(
                         tree_node=tree_node,
                         old_var_node=var_node_old,
                         new_var_node=var_node_new,
                         path=path,
                     )
+                else:
+                    for node in (var_node_old, var_node_new):
+                        if isinstance(node, get_args(TreeNode)):
+                            # If the types are different we can stop recursing, but if they are the same
+                            # we need to check whether they are TreeNode types
+                            # TreeNode types must be handled explicitly because they can contain VarNodes
+                            # that might have changed.
+                            msg = f"VarNodes that are TreeNodes must be handled explicitly: {type(node)}"
+                            raise InternalError(msg)
