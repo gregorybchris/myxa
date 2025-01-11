@@ -3,7 +3,8 @@ import re
 from copy import deepcopy
 from typing import Literal, Optional, Self, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic import Field as PydanticField
 
 from myxa.errors import InternalError, UserError
 
@@ -49,6 +50,18 @@ class Func(BaseModel):
     return_var_node: "VarNode"
 
 
+class Field(BaseModel):
+    node_type: Literal["field"] = "field"
+    name: str
+    var_node: "VarNode"
+
+
+class Struct(BaseModel):
+    node_type: Literal["struct"] = "struct"
+    name: str
+    fields: dict[str, Field]
+
+
 class Import(BaseModel):
     package_name: str
     path: list[str]
@@ -62,7 +75,7 @@ class Mod(BaseModel):
     members: dict[str, "TreeNode"]
 
 
-TreeNode = Union[Const, Func, Mod, Param]
+TreeNode = Union[Mod, Struct, Field, Func, Param, Const]
 
 VarNode = Union[Bool, Float, Int, Null, Str, Func]
 
@@ -71,6 +84,10 @@ def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
     match node:
         case Mod():
             return "Mod"
+        case Struct():
+            return "Struct"
+        case Field():
+            return "Field"
         case Func():
             return "Func"
         case Const():
@@ -94,17 +111,24 @@ def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
 
 def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:
     match node:
+        case Struct(fields=fields):
+            field_node_type_strs = [get_node_type_str(field) for field in fields.values()]
+            fields_str = ", ".join(field_node_type_strs)
+            return f"Struct[{fields_str}]"
+        case Field(var_node=var_node):
+            var_node_type_str = get_node_type_str(var_node)
+            return f"Field[{var_node_type_str}]"
         case Func(params=params, return_var_node=return_var_node):
             param_node_type_strs = [get_node_type_str(param.var_node) for _, param in params.items()]
             params_str = ", ".join(param_node_type_strs)
             return_var_node_type_str = get_node_type_str(return_var_node)
             return f"Func[[{params_str}], {return_var_node_type_str}]"
-        case Const(var_node=var_node):
-            var_node_type_str = get_node_type_str(var_node)
-            return f"Const[{var_node_type_str}]"
         case Param(var_node=var_node):
             var_node_type_str = get_node_type_str(var_node)
             return f"Param[{var_node_type_str}]"
+        case Const(var_node=var_node):
+            var_node_type_str = get_node_type_str(var_node)
+            return f"Const[{var_node_type_str}]"
         case _:
             return get_node_str(node)
 
@@ -160,7 +184,7 @@ class PackageInfo(BaseModel):
 
 
 class PackageLock(BaseModel):
-    deps: dict[str, Dep] = Field(default_factory=dict)
+    deps: dict[str, Dep] = PydanticField(default_factory=dict)
 
 
 class Package(BaseModel):
@@ -171,12 +195,12 @@ class Package(BaseModel):
 
 class Namespace(BaseModel):
     name: str
-    packages: dict[str, Package] = Field(default_factory=dict)
+    packages: dict[str, Package] = PydanticField(default_factory=dict)
 
 
 class Index(BaseModel):
     name: str
-    namespaces: dict[str, Namespace] = Field(default_factory=dict)
+    namespaces: dict[str, Namespace] = PydanticField(default_factory=dict)
 
     def add_package(self, package: Package) -> None:
         package = deepcopy(package)

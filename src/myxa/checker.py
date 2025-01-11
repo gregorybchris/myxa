@@ -5,7 +5,7 @@ from typing import Iterator
 from pydantic import BaseModel
 
 from myxa.errors import InternalError
-from myxa.models import Const, Func, Mod, Package, Param, TreeNode, VarNode
+from myxa.models import Const, Field, Func, Mod, Package, Param, Struct, TreeNode, VarNode
 
 logger = logging.getLogger(__name__)
 
@@ -66,13 +66,15 @@ class Checker:
 
     def _diff_tree_node(self, tree_node_old: TreeNode, tree_node_new: TreeNode, path: Path) -> Iterator[Change]:
         for node in (tree_node_old, tree_node_new):
-            if not isinstance(node, (Mod, Func, Const)):
+            if not isinstance(node, (Mod, Struct, Func, Const)):
                 msg = f"Invalid node type {type(node)}, not permitted"
                 raise InternalError(msg)
 
         match tree_node_old, tree_node_new:
             case (Mod() as mod_old, Mod() as mod_new):
                 yield from self._diff_mod(mod_old, mod_new, path)
+            case (Struct() as struct_old, Struct() as struct_new):
+                yield from self._diff_struct(struct_old, struct_new, path)
             case (Func() as func_old, Func() as func_new):
                 yield from self._diff_func(func_old, func_new, path)
             case (Const() as const_old, Const() as const_new):
@@ -82,6 +84,25 @@ class Checker:
 
     def _diff_mod(self, mod_old: Mod, mod_new: Mod, path: Path) -> Iterator[Change]:
         yield from self._diff_members(mod_old.members, mod_new.members, path)
+
+    def _diff_struct(self, struct_old: Struct, struct_new: Struct, path: Path) -> Iterator[Change]:
+        old_field_names = set(struct_old.fields.keys())
+        new_field_names = set(struct_new.fields.keys())
+        all_field_names = sorted(old_field_names.union(new_field_names))
+        for field_name in all_field_names:
+            field_path = [*path, field_name]
+            if field_name in old_field_names and field_name in new_field_names:
+                yield from self._diff_field(struct_old.fields[field_name], struct_new.fields[field_name], field_path)
+            elif field_name in old_field_names:
+                yield from self._handle_tree_node_removal(struct_old.fields[field_name], field_path)
+            else:
+                yield from self._handle_tree_node_addition(struct_new.fields[field_name], field_path)
+
+    def _diff_field(self, field_old: Field, field_new: Field, path: Path) -> Iterator[Change]:
+        if field_old.var_node != field_new.var_node:
+            yield VarNodeChange(
+                tree_node=field_old, old_var_node=field_old.var_node, new_var_node=field_new.var_node, path=path
+            )
 
     def _diff_func(self, func_old: Func, func_new: Func, path: Path) -> Iterator[Change]:
         if func_old.return_var_node != func_new.return_var_node:
@@ -117,29 +138,7 @@ class Checker:
             )
 
     def _handle_tree_node_removal(self, tree_node: TreeNode, path: Path) -> Iterator[Change]:
-        match tree_node:
-            case Mod():
-                yield Removal(tree_node=tree_node, path=path)
-            case Func():
-                yield Removal(tree_node=tree_node, path=path)
-            case Param():
-                yield Removal(tree_node=tree_node, path=path)
-            case Const():
-                yield Removal(tree_node=tree_node, path=path)
-            case _:
-                msg = f"Checking for {type(tree_node)} nodes is not implemented"
-                raise NotImplementedError(msg)
+        yield Removal(tree_node=tree_node, path=path)
 
     def _handle_tree_node_addition(self, tree_node: TreeNode, path: Path) -> Iterator[Change]:
-        match tree_node:
-            case Mod():
-                yield Addition(tree_node=tree_node, path=path)
-            case Func():
-                yield Addition(tree_node=tree_node, path=path)
-            case Param():
-                yield Addition(tree_node=tree_node, path=path)
-            case Const():
-                yield Addition(tree_node=tree_node, path=path)
-            case _:
-                msg = f"Checking for {type(tree_node)} nodes is not implemented"
-                raise NotImplementedError(msg)
+        yield Addition(tree_node=tree_node, path=path)
