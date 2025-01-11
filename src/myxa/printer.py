@@ -299,7 +299,7 @@ class Printer:
                 msg = f"Node type {type(node)} is not supported"
                 raise InternalError(msg)
 
-    def get_node_type_str(self, node: Node) -> str:  # noqa: PLR0911
+    def get_node_type_str(self, node: Node) -> str:  # noqa: PLR0911, PLR0912
         g = "[light_goldenrod2]"
         s = "[sandy_brown]"
         b = "[black]"
