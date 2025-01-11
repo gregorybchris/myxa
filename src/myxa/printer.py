@@ -13,7 +13,7 @@ from rich.tree import Tree
 from myxa.checker import Addition, Change, Removal, TreeNodeChange, VarNodeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
-from myxa.models import Const, Func, Index, Mod, Package, PackageLock, TreeNode, VarNode, get_node_str
+from myxa.models import Const, Enum, Func, Index, Mod, Package, PackageLock, Struct, TreeNode, VarNode, get_node_str
 from myxa.models import get_node_type_str as get_raw_node_type_str
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:
     raw_node_type_str = get_raw_node_type_str(node)
     formatted = ""
-    symbol_chars = ",[]"
+    symbol_chars = ",[]()"
     for c in raw_node_type_str:
         if c in symbol_chars:
             formatted += f"[black]{c}"
@@ -57,6 +57,16 @@ class Printer:
             case Const(name=name, var_node=var_node):
                 var_node_type_str = get_node_type_str(var_node)
                 tree.add(f"[steel_blue1]{name}[black]: {var_node_type_str}")
+            case Struct(name=name, fields=fields):
+                struct_tree = tree.add(name, style="purple")
+                for field_name, field_node in fields.items():
+                    field_node_type_str = get_node_type_str(field_node.var_node)
+                    struct_tree.add(f"[steel_blue1]{field_name}[black]: {field_node_type_str}")
+            case Enum(name=name, variants=variants):
+                enum_tree = tree.add(name, style="purple")
+                for variant_name, variant_node in variants.items():
+                    variant_node_type_str = get_node_type_str(variant_node.var_node)
+                    enum_tree.add(f"[steel_blue1]{variant_name}[black]: {variant_node_type_str}")
             case Func(name=name, params=params, return_var_node=return_var_node):
                 return_var_node_type_str = get_node_type_str(return_var_node)
                 func_str = f"[steel_blue1]{name}[black]("

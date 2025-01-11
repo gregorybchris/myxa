@@ -24,7 +24,7 @@ class TestChecker:
         euler_package_new = deepcopy(euler_package)
         euler_package_new.members["math"].members["add"] = Int()
 
-        with pytest.raises(InternalError, match="Invalid node type <class 'myxa.models.Int'>, not permitted"):
+        with pytest.raises(InternalError, match="Invalid tree node type <class 'myxa.models.Int'>, not permitted"):
             checker.diff(euler_package, euler_package_new)
 
     def test_check_node_type_changed(

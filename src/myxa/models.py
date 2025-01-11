@@ -87,9 +87,11 @@ class Mod(BaseModel):
     members: dict[str, "TreeNode"]
 
 
+# Nodes that can be referred to in a package diff
 TreeNode = Union[Mod, Struct, Field, Enum, Variant, Func, Param, Const]
 
-VarNode = Union[Bool, Enum, Float, Func, Int, Null, Str, Struct, Variant]
+# Nodes that be passed as a type
+VarNode = Union[Bool, Enum, Float, Func, Int, Null, Str, Struct]
 
 
 def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911, PLR0912
@@ -127,20 +129,22 @@ def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911, PLR09
 
 def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
     match node:
-        case Struct(fields=fields):
+        case Struct(name=name, fields=fields):
             field_node_type_strs = [get_node_type_str(field) for field in fields.values()]
             fields_str = ", ".join(field_node_type_strs)
-            return f"Struct[{fields_str}]"
-        case Field(var_node=var_node):
+            return f"Struct({name})[{fields_str}]"
+        case Field(name=name, var_node=var_node):
             var_node_type_str = get_node_type_str(var_node)
-            return f"Field[{var_node_type_str}]"
-        case Enum(variants=variants):
+            return f"{name}({var_node_type_str})"
+        case Enum(name=name, variants=variants):
             variant_node_type_strs = [get_node_type_str(variant) for variant in variants.values()]
             variants_str = ", ".join(variant_node_type_strs)
-            return f"Enum[{variants_str}]"
-        case Variant(var_node=var_node):
+            return f"Enum({name})[{variants_str}]"
+        case Variant(name=name, var_node=var_node):
             var_node_type_str = get_node_type_str(var_node)
-            return f"Variant[{var_node_type_str}]"
+            if var_node.node_type == "null":
+                return f"{name}"
+            return f"{name}({var_node_type_str})"
         case Func(params=params, return_var_node=return_var_node):
             param_node_type_strs = [get_node_type_str(param.var_node) for _, param in params.items()]
             params_str = ", ".join(param_node_type_strs)

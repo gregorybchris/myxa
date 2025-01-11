@@ -90,7 +90,8 @@ mx index
 - Integration with Python code
 - Integration with PyPI
 - Support for optional params
-- Support for List, Dict, Set, Tuple, Optional in functions
+- Support for references to other package members
+- Support for List, Dict, Set, Tuple, and Optional types
 - Support for dev dependencies/groups/extras
 - Support for upper bounds on dependencies
 - Support for specifying preferred indexes in package metadata
