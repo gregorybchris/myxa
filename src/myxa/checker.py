@@ -13,6 +13,7 @@ from myxa.models import (
     Float,
     Func,
     Int,
+    MemberNode,
     Mod,
     Null,
     Package,
@@ -27,7 +28,7 @@ from myxa.models import (
 logger = logging.getLogger(__name__)
 
 Path = list[str]
-Members = dict[str, TreeNode]
+Members = dict[str, MemberNode]
 
 
 class Change(BaseModel):

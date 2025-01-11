@@ -84,8 +84,11 @@ class Mod(BaseModel):
     node_type: Literal["mod"] = "mod"
     name: str
     imports: list[Import]
-    members: dict[str, "TreeNode"]
+    members: dict[str, "MemberNode"]
 
+
+# Nodes that can be declared at the top level of package modules
+MemberNode = Union[Mod, Struct, Enum, Func, Const]
 
 # Nodes that can be referred to in a package diff
 TreeNode = Union[Mod, Struct, Field, Enum, Variant, Func, Param, Const]
@@ -151,7 +154,7 @@ class PackageLock(BaseModel):
 class Package(BaseModel):
     info: PackageInfo
     lock: Optional[PackageLock] = None
-    members: dict[str, TreeNode]
+    members: dict[str, MemberNode]
 
 
 class Namespace(BaseModel):
