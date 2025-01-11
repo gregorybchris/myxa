@@ -62,6 +62,18 @@ class Struct(BaseModel):
     fields: dict[str, Field]
 
 
+class Variant(BaseModel):
+    node_type: Literal["variant"] = "variant"
+    name: str
+    var_node: "VarNode"
+
+
+class Enum(BaseModel):
+    node_type: Literal["enum"] = "enum"
+    name: str
+    variants: dict[str, Variant]
+
+
 class Import(BaseModel):
     package_name: str
     path: list[str]
@@ -75,12 +87,12 @@ class Mod(BaseModel):
     members: dict[str, "TreeNode"]
 
 
-TreeNode = Union[Mod, Struct, Field, Func, Param, Const]
+TreeNode = Union[Mod, Struct, Field, Enum, Variant, Func, Param, Const]
 
-VarNode = Union[Bool, Float, Int, Null, Str, Func]
+VarNode = Union[Bool, Enum, Float, Func, Int, Null, Str, Struct, Variant]
 
 
-def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
+def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911, PLR0912
     match node:
         case Mod():
             return "Mod"
@@ -88,6 +100,10 @@ def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
             return "Struct"
         case Field():
             return "Field"
+        case Enum():
+            return "Enum"
+        case Variant():
+            return "Variant"
         case Func():
             return "Func"
         case Const():
@@ -109,7 +125,7 @@ def get_node_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
             raise InternalError(msg)
 
 
-def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:
+def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:  # noqa: PLR0911
     match node:
         case Struct(fields=fields):
             field_node_type_strs = [get_node_type_str(field) for field in fields.values()]
@@ -118,6 +134,13 @@ def get_node_type_str(node: Union[TreeNode, VarNode]) -> str:
         case Field(var_node=var_node):
             var_node_type_str = get_node_type_str(var_node)
             return f"Field[{var_node_type_str}]"
+        case Enum(variants=variants):
+            variant_node_type_strs = [get_node_type_str(variant) for variant in variants.values()]
+            variants_str = ", ".join(variant_node_type_strs)
+            return f"Enum[{variants_str}]"
+        case Variant(var_node=var_node):
+            var_node_type_str = get_node_type_str(var_node)
+            return f"Variant[{var_node_type_str}]"
         case Func(params=params, return_var_node=return_var_node):
             param_node_type_strs = [get_node_type_str(param.var_node) for _, param in params.items()]
             params_str = ", ".join(param_node_type_strs)

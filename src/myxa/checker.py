@@ -5,7 +5,7 @@ from typing import Iterator
 from pydantic import BaseModel
 
 from myxa.errors import InternalError
-from myxa.models import Const, Field, Func, Mod, Package, Param, Struct, TreeNode, VarNode
+from myxa.models import Const, Enum, Field, Func, Mod, Package, Param, Struct, TreeNode, Variant, VarNode
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class Checker:
 
     def _diff_tree_node(self, tree_node_old: TreeNode, tree_node_new: TreeNode, path: Path) -> Iterator[Change]:
         for node in (tree_node_old, tree_node_new):
-            if not isinstance(node, (Mod, Struct, Func, Const)):
+            if not isinstance(node, (Mod, Struct, Enum, Func, Const)):
                 msg = f"Invalid node type {type(node)}, not permitted"
                 raise InternalError(msg)
 
@@ -75,6 +75,8 @@ class Checker:
                 yield from self._diff_mod(mod_old, mod_new, path)
             case (Struct() as struct_old, Struct() as struct_new):
                 yield from self._diff_struct(struct_old, struct_new, path)
+            case (Enum() as enum_old, Enum() as enum_new):
+                yield from self._diff_enum(enum_old, enum_new, path)
             case (Func() as func_old, Func() as func_new):
                 yield from self._diff_func(func_old, func_new, path)
             case (Const() as const_old, Const() as const_new):
@@ -102,6 +104,25 @@ class Checker:
         if field_old.var_node != field_new.var_node:
             yield VarNodeChange(
                 tree_node=field_old, old_var_node=field_old.var_node, new_var_node=field_new.var_node, path=path
+            )
+
+    def _diff_enum(self, enum_old: Enum, enum_new: Enum, path: Path) -> Iterator[Change]:
+        old_field_names = set(enum_old.variants.keys())
+        new_field_names = set(enum_new.variants.keys())
+        all_field_names = sorted(old_field_names.union(new_field_names))
+        for field_name in all_field_names:
+            field_path = [*path, field_name]
+            if field_name in old_field_names and field_name in new_field_names:
+                yield from self._diff_field(enum_old.variants[field_name], enum_new.variants[field_name], field_path)
+            elif field_name in old_field_names:
+                yield from self._handle_tree_node_removal(enum_old.variants[field_name], field_path)
+            else:
+                yield from self._handle_tree_node_addition(enum_new.variants[field_name], field_path)
+
+    def _diff_variant(self, variant_old: Variant, variant_new: Variant, path: Path) -> Iterator[Change]:
+        if variant_old.var_node != variant_new.var_node:
+            yield VarNodeChange(
+                tree_node=variant_old, old_var_node=variant_old.var_node, new_var_node=variant_new.var_node, path=path
             )
 
     def _diff_func(self, func_old: Func, func_new: Func, path: Path) -> Iterator[Change]:
