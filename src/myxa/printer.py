@@ -61,9 +61,9 @@ class Printer:
     def input(self, prompt: str) -> str:
         return self.console.input(f"[bold]{prompt}")
 
-    def _add_tree_node(self, tree_node: MemberNode, tree: Tree) -> None:
+    def _add_member_node(self, member_node: MemberNode, tree: Tree) -> None:
         type_builtin = builtins.type
-        match tree_node:
+        match member_node:
             case Const(name=name, var_node=var_node):
                 var_node_type_str = self.get_node_type_str(var_node)
                 tree.add(f"[steel_blue1]{name}[black]: {var_node_type_str}")
@@ -76,7 +76,11 @@ class Printer:
                 enum_tree = tree.add(name, style="steel_blue1")
                 for variant_name, variant_node in variants.items():
                     variant_node_type_str = self.get_node_type_str(variant_node.var_node)
-                    enum_tree.add(f"[red]{variant_name}[black]: {variant_node_type_str}")
+                    variant_node_type = variant_node.var_node.node_type
+                    full_var_node_str = (
+                        f"[black]({variant_node_type_str}[black])" if variant_node_type != "null" else ""
+                    )
+                    enum_tree.add(f"[red]{variant_name}{full_var_node_str}")
             case Func(name=name, params=params, return_var_node=return_var_node):
                 return_var_node_type_str = self.get_node_type_str(return_var_node)
                 func_str = f"[steel_blue1]{name}[black]("
@@ -91,9 +95,9 @@ class Printer:
             case Mod(name=name, members=members):
                 mod_tree = tree.add(name, style="purple")
                 for member in members.values():
-                    self._add_tree_node(member, mod_tree)
+                    self._add_member_node(member, mod_tree)
             case _:
-                msg = f"Node type not handled: {type_builtin(tree_node)}"
+                msg = f"Node type not handled: {type_builtin(member_node)}"
                 raise InternalError(msg)
 
     def print_package(  # noqa: PLR0912
@@ -147,7 +151,7 @@ class Printer:
         if show_interface:
             mod_tree = Tree("Interface", style="steel_blue3")
             for node in package.members.values():
-                self._add_tree_node(node, mod_tree)
+                self._add_member_node(node, mod_tree)
             if not package.members:
                 mod_tree.add("\\[empty]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, mod_tree)
