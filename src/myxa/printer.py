@@ -180,25 +180,28 @@ class Printer:
 
     def print_change(self, change: Change) -> None:
         match change:
-            case Addition(tree_node=node, path=path):
+            case Addition(tree_node=tree_node, path=path):
                 name = ".".join(path)
-                node_str = get_node_str(node)
+                node_str = get_node_str(tree_node)
                 self.console.print(
                     f"[black]+[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been added"
                 )
-            case Removal(tree_node=node, path=path):
+            case Removal(tree_node=tree_node, path=path):
                 name = ".".join(path)
-                node_str = get_node_str(node)
+                node_str = get_node_str(tree_node)
                 self.console.print(
                     f"[black]-[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been removed"
                 )
-            case VarNodeChange(tree_node=node, old_var_node=old_var_node, new_var_node=new_var_node, path=path):
-                node_str = get_node_str(node)
+            case VarNodeChange(tree_node=tree_node, old_var_node=old_var_node, new_var_node=new_var_node, path=path):
+                node_str = get_node_str(tree_node)
                 name = ".".join(path)
                 old_var_node_type_str = get_node_type_str(old_var_node)
                 new_var_node_type_str = get_node_type_str(new_var_node)
+                return_type_str = "return " if isinstance(tree_node, Func) else ""
+
                 self.console.print(
-                    f"[black]-[steel_blue3] The type of {node_str} [steel_blue1]'{name}'[steel_blue3] has changed from"
+                    f"[black]-[steel_blue3] The {return_type_str}type of"
+                    f" {node_str} [steel_blue1]'{name}'[steel_blue3] has changed from"
                     f" {old_var_node_type_str}[steel_blue3]"
                     f" to {new_var_node_type_str}[steel_blue3]"
                 )
