@@ -37,6 +37,27 @@ class Const(BaseModel):
     var_node: "VarNode"
 
 
+class Maybe(BaseModel):
+    node_type: Literal["maybe"] = "maybe"
+    var_node: "VarNode"
+
+
+class List(BaseModel):
+    node_type: Literal["list"] = "list"
+    var_node: "VarNode"
+
+
+class Set(BaseModel):
+    node_type: Literal["set"] = "set"
+    var_node: "VarNode"
+
+
+class Dict(BaseModel):
+    node_type: Literal["dict"] = "dict"
+    key_var_node: "VarNode"
+    val_var_node: "VarNode"
+
+
 class Param(BaseModel):
     node_type: Literal["param"] = "param"
     name: str
@@ -88,13 +109,16 @@ class Mod(BaseModel):
 
 
 # Nodes that can be declared at the top level of package modules
-MemberNode = Union[Mod, Struct, Enum, Func, Const]
+MemberNode = Union[Const, Enum, Func, Mod, Struct]
 
 # Nodes that can be referred to in a package diff
-TreeNode = Union[Mod, Struct, Field, Enum, Variant, Func, Param, Const]
+TreeNode = Union[Const, Enum, Field, Func, Mod, Param, Struct, Variant]
 
 # Nodes that be passed as a type
-VarNode = Union[Bool, Enum, Float, Func, Int, Null, Str, Struct]
+VarNode = Union[Bool, Dict, Enum, Float, Func, Int, List, Maybe, Null, Set, Str, Struct]
+
+# All node types
+Node = Union[MemberNode, TreeNode, VarNode]
 
 
 class Version(BaseModel):

@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 
-from myxa.checker import Checker, Removal, TreeNodeChange, VarNodeChange
+from myxa.checker import Checker, MemberNodeChange, Removal, VarNodeChange
 from myxa.errors import InternalError
 from myxa.models import Const, Float, Func, Int, Package, Param
 
@@ -40,9 +40,9 @@ class TestChecker:
 
         breaks = checker.diff(euler_package, euler_package_new)
         assert len(breaks) == 1
-        assert isinstance(breaks[0], TreeNodeChange)
-        assert isinstance(breaks[0].old_tree_node, Func)
-        assert isinstance(breaks[0].new_tree_node, Const)
+        assert isinstance(breaks[0], MemberNodeChange)
+        assert isinstance(breaks[0].old_member_node, Func)
+        assert isinstance(breaks[0].new_member_node, Const)
         assert breaks[0].path == ["euler", "math", "add"]
 
     def test_check_function_param_type_changed(

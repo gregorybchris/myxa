@@ -1,7 +1,7 @@
 import builtins
 import logging
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Optional
 
 import inflect
 from rich.console import Console, Group
@@ -10,28 +10,32 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
 
-from myxa.checker import Addition, Change, Removal, TreeNodeChange, VarNodeChange
+from myxa.checker import Addition, Change, MemberNodeChange, Removal, VarNodeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
 from myxa.models import (
     Bool,
     Const,
+    Dict,
     Enum,
     Field,
     Float,
     Func,
     Index,
     Int,
+    List,
+    Maybe,
     MemberNode,
     Mod,
+    Node,
     Null,
     Package,
     PackageLock,
     Param,
+    Set,
     Str,
     Struct,
     Variant,
-    VarNode,
 )
 
 logger = logging.getLogger(__name__)
@@ -242,52 +246,60 @@ class Printer:
                     f" {old_var_node_type_str}[steel_blue3]"
                     f" to {new_var_node_type_str}[steel_blue3]"
                 )
-            case TreeNodeChange(old_tree_node=old_tree_node, new_tree_node=new_tree_node, path=path):
+            case MemberNodeChange(old_member_node=old_member_node, new_member_node=new_member_node, path=path):
                 name = ".".join(path)
-                old_tree_node_type_str = self.get_node_type_str(old_tree_node)
-                new_tree_node_type_str = self.get_node_type_str(new_tree_node)
+                old_member_node_type_str = self.get_node_type_str(old_member_node)
+                new_member_node_type_str = self.get_node_type_str(new_member_node)
                 self.console.print(
                     f"[black]-[steel_blue3] The type of [steel_blue1]'{name}'[steel_blue3] has changed from"
-                    f" {old_tree_node_type_str}[steel_blue3]"
-                    f" to {new_tree_node_type_str}[steel_blue3]"
+                    f" {old_member_node_type_str}[steel_blue3]"
+                    f" to {new_member_node_type_str}[steel_blue3]"
                 )
             case _:
                 msg = f"Change type {type(change)} is not supported"
                 raise InternalError(msg)
 
-    def get_node_str(self, node: Union[MemberNode, VarNode]) -> str:  # noqa: PLR0911, PLR0912
+    def get_node_str(self, node: Node) -> str:  # noqa: PLR0911, PLR0912
         match node:
-            case Mod():
-                return "Mod"
-            case Struct():
-                return "Struct"
-            case Field():
-                return "Field"
-            case Enum():
-                return "Enum"
-            case Variant():
-                return "Variant"
-            case Func():
-                return "Func"
-            case Const():
-                return "Const"
-            case Param():
-                return "Param"
             case Bool():
                 return "Bool"
+            case Const():
+                return "Const"
+            case Dict():
+                return "Dict"
+            case Enum():
+                return "Enum"
+            case Field():
+                return "Field"
             case Float():
                 return "Float"
+            case Func():
+                return "Func"
             case Int():
                 return "Int"
+            case List():
+                return "List"
+            case Maybe():
+                return "Maybe"
+            case Mod():
+                return "Mod"
             case Null():
                 return "Null"
+            case Param():
+                return "Param"
+            case Set():
+                return "Set"
             case Str():
                 return "Str"
+            case Struct():
+                return "Struct"
+            case Variant():
+                return "Variant"
             case _:
                 msg = f"Node type {type(node)} is not supported"
                 raise InternalError(msg)
 
-    def get_node_type_str(self, node: Union[MemberNode, VarNode]) -> str:  # noqa: PLR0911
+    def get_node_type_str(self, node: Node) -> str:  # noqa: PLR0911
         g = "[light_goldenrod2]"
         s = "[sandy_brown]"
         b = "[black]"
@@ -316,6 +328,19 @@ class Printer:
             case Param(var_node=var_node):
                 var_node_type_str = self.get_node_type_str(var_node)
                 return f"{g}Param{b}[{g}{var_node_type_str}{b}]"
+            case Maybe(var_node=var_node):
+                var_node_type_str = self.get_node_type_str(var_node)
+                return f"{g}Maybe{b}[{g}{var_node_type_str}{b}]"
+            case List(var_node=var_node):
+                var_node_type_str = self.get_node_type_str(var_node)
+                return f"{g}List{b}[{g}{var_node_type_str}{b}]"
+            case Set(var_node=var_node):
+                var_node_type_str = self.get_node_type_str(var_node)
+                return f"{g}Set{b}[{g}{var_node_type_str}{b}]"
+            case Dict(key_var_node=key_var_node, val_var_node=val_var_node):
+                key_var_node_type_str = self.get_node_type_str(key_var_node)
+                val_var_node_type_str = self.get_node_type_str(val_var_node)
+                return f"{g}Dict{b}[{g}{key_var_node_type_str}{b}, {g}{val_var_node_type_str}{b}]"
             case Const(var_node=var_node):
                 var_node_type_str = self.get_node_type_str(var_node)
                 return f"{g}Const{b}[{g}{var_node_type_str}{b}]"

@@ -99,7 +99,7 @@ mx index --package <package_name>
 - Integration with PyPI
 - Support for optional params
 - Support for references to other package members
-- Support for List, Dict, Set, Tuple, and Optional types
+- Support for Tuple type
 - Support for dev dependencies/groups/extras
 - Support for upper bounds on dependencies
 - Support for specifying preferred indexes in package metadata

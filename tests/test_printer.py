@@ -8,16 +8,20 @@ from myxa.checker import Checker
 from myxa.manager import Manager
 from myxa.models import (
     Const,
+    Dict,
     Enum,
     Field,
     Float,
     Func,
     Index,
     Int,
+    List,
+    Maybe,
     Null,
     Package,
     PackageLock,
     Param,
+    Set,
     Str,
     Struct,
     Variant,
@@ -306,3 +310,35 @@ Const[Int]
         capture_result = capsys.readouterr()
         text_output = clean_colors(capture_result.out)
         assert text_output == "Struct(Generator)[mod(Int), mult(Int), inc(Int)]\n"
+
+    def test_get_node_type_str_maybe_int(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        maybe_int_node = Maybe(var_node=Int())
+        maybe_int_node_str = printer.get_node_type_str(maybe_int_node)
+        printer.print_message(maybe_int_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Maybe[Int]\n"
+
+    def test_get_node_type_str_list_float(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        list_float_node = List(var_node=Float())
+        list_float_node_str = printer.get_node_type_str(list_float_node)
+        printer.print_message(list_float_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "List[Float]\n"
+
+    def test_get_node_type_str_set_str(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        set_str_node = Set(var_node=Str())
+        set_str_node_str = printer.get_node_type_str(set_str_node)
+        printer.print_message(set_str_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Set[Str]\n"
+
+    def test_get_node_type_str_dict_str_int(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        dict_str_int_node = Dict(key_var_node=Str(), val_var_node=Int())
+        dict_str_int_node_str = printer.get_node_type_str(dict_str_int_node)
+        printer.print_message(dict_str_int_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Dict[Str, Int]\n"

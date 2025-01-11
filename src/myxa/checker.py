@@ -28,7 +28,7 @@ Members = dict[str, MemberNode]
 
 class Change(BaseModel):
     def is_breaking(self) -> bool:
-        return isinstance(self, (Removal, VarNodeChange, TreeNodeChange))
+        return isinstance(self, (Removal, VarNodeChange, MemberNodeChange))
 
 
 class Addition(Change):
@@ -48,9 +48,9 @@ class VarNodeChange(Change):
     path: Path
 
 
-class TreeNodeChange(Change):
-    old_tree_node: TreeNode
-    new_tree_node: TreeNode
+class MemberNodeChange(Change):
+    old_member_node: MemberNode
+    new_member_node: MemberNode
     path: Path
 
 
@@ -100,7 +100,7 @@ class Checker:
             case (Const() as const_old, Const() as const_new):
                 yield from self._diff_const(const_old, const_new, path)
             case _:
-                yield TreeNodeChange(old_tree_node=member_node_old, new_tree_node=member_node_new, path=path)
+                yield MemberNodeChange(old_member_node=member_node_old, new_member_node=member_node_new, path=path)
 
     def _diff_mod(self, mod_old: Mod, mod_new: Mod, path: Path) -> Iterator[Change]:
         yield from self._diff_members(mod_old.members, mod_new.members, path)
