@@ -58,15 +58,15 @@ class Printer:
                 var_node_type_str = get_node_type_str(var_node)
                 tree.add(f"[steel_blue1]{name}[black]: {var_node_type_str}")
             case Struct(name=name, fields=fields):
-                struct_tree = tree.add(name, style="purple")
+                struct_tree = tree.add(name, style="steel_blue1")
                 for field_name, field_node in fields.items():
                     field_node_type_str = get_node_type_str(field_node.var_node)
-                    struct_tree.add(f"[steel_blue1]{field_name}[black]: {field_node_type_str}")
+                    struct_tree.add(f"[red]{field_name}[black]: {field_node_type_str}")
             case Enum(name=name, variants=variants):
-                enum_tree = tree.add(name, style="purple")
+                enum_tree = tree.add(name, style="steel_blue1")
                 for variant_name, variant_node in variants.items():
                     variant_node_type_str = get_node_type_str(variant_node.var_node)
-                    enum_tree.add(f"[steel_blue1]{variant_name}[black]: {variant_node_type_str}")
+                    enum_tree.add(f"[red]{variant_name}[black]: {variant_node_type_str}")
             case Func(name=name, params=params, return_var_node=return_var_node):
                 return_var_node_type_str = get_node_type_str(return_var_node)
                 func_str = f"[steel_blue1]{name}[black]("
@@ -92,6 +92,7 @@ class Printer:
         show_deps: bool = True,
         show_lock: bool = True,
         show_interface: bool = True,
+        index: Optional[Index] = None,
     ) -> None:
         info = package.info
 
@@ -108,7 +109,13 @@ class Printer:
         if show_deps:
             deps_tree = Tree("Dependencies", style="steel_blue3")
             for dep in info.deps.values():
-                deps_tree.add(f"{dep.name}~={dep.version.to_str()}", style="steel_blue1")
+                if index is not None:
+                    latest_dep_package = index.get_latest_package(dep.name)
+                    is_latest_major = dep.version.major == latest_dep_package.info.version.major
+                    version_color = "green" if is_latest_major else "sandy_brown"
+                else:
+                    version_color = "white"
+                deps_tree.add(f"[steel_blue1]{dep.name}[black]~=[{version_color}]{dep.version.to_str()}")
             if not info.deps:
                 deps_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, deps_tree)
@@ -116,7 +123,13 @@ class Printer:
         if show_lock and package.lock is not None:
             lock_tree = Tree("Locked dependencies", style="steel_blue3")
             for dep in package.lock.deps.values():
-                lock_tree.add(f"{dep.name}=={dep.version.to_str()}", style="steel_blue1")
+                if index is not None:
+                    latest_dep_package = index.get_latest_package(dep.name)
+                    is_latest_major = dep.version.major == latest_dep_package.info.version.major
+                    version_color = "green" if is_latest_major else "sandy_brown"
+                else:
+                    version_color = "white"
+                lock_tree.add(f"[steel_blue1]{dep.name}[black]==[{version_color}]{dep.version.to_str()}")
             if not package.lock.deps:
                 lock_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, lock_tree)

@@ -56,6 +56,7 @@ class Manager:
             show_deps=show_deps,
             show_lock=show_lock,
             show_interface=show_interface,
+            index=index,
         )
 
     def add(self, package: Package, dep_name: str, index: Index, version: Optional[Version] = None) -> None:
