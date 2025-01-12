@@ -235,7 +235,8 @@ class Printer:
                 name = ".".join(path)
                 node_str = self.get_node_str(tree_node)
                 self.console.print(
-                    f"[bright_black]-[steel_blue3] {node_str.title()} [steel_blue1]'{name}'[steel_blue3] has been removed"
+                    f"[bright_black]-[steel_blue3] {node_str.title()}"
+                    f" [steel_blue1]'{name}'[steel_blue3] has been removed"
                 )
             case VarNodeChange(tree_node=tree_node, old_var_node=old_var_node, new_var_node=new_var_node, path=path):
                 node_str = self.get_node_str(tree_node)
