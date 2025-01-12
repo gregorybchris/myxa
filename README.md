@@ -35,14 +35,6 @@ uv sync
 
 ## Usage
 
-First, set an environment variable to an index.json file, which will track your published packages locally.
-
-```bash
-export MYXA_INDEX="path/to/index.json"
-```
-
-Then just use Myxa like most modern package managers!
-
 ```bash
 # Initialize a new package
 mx init <name> "<description>"
@@ -91,6 +83,14 @@ mx index --no-versions
 
 # List all versions of one package in the index
 mx index --package <package_name>
+```
+
+### Local Index
+
+Myxa automatically creates a local package index file where published packages are stored. To keep your index file somewhere else you can use the `MYXA_INDEX` environment variable. The recommended filename is `index.json`.
+
+```bash
+export MYXA_INDEX="path/to/index.json"
 ```
 
 ### Unsupported features

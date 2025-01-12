@@ -1,5 +1,6 @@
 import logging
 import os
+import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, Generator, Optional
@@ -31,10 +32,13 @@ def set_logger_config(info: bool, debug: bool) -> None:
 
 def load_index_path() -> Path:
     index_filepath_str = os.getenv("MYXA_INDEX")
-    if index_filepath_str is None:
-        msg = "MYXA_INDEX environment variable not set"
-        raise UserError(msg)
-    return Path(index_filepath_str)
+    if index_filepath_str is not None:
+        return Path(index_filepath_str)
+
+    temp_dirpath = Path(tempfile.gettempdir())
+    myxa_temp_dir = temp_dirpath / "myxa"
+    myxa_temp_dir.mkdir(exist_ok=True)
+    return myxa_temp_dir / "index.json"
 
 
 def load_index(manager: Manager) -> Index:
