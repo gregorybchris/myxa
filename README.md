@@ -23,7 +23,7 @@ Along with package dependencies, Myxa also tracks the type signatures of each fu
 
 For large packages, most of the time breaking changes only affect a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade, even across major version boundaries.
 
-> Note: It sorta goes without saying that Myxa performs only compile-time checks. As it turns out, using only static analysis to determine backwards-compatibility at runtime is fairly difficult :)
+> Note: Myxa compatibility checks are compile-time only. Runtime compatibility checks, as you might know, are _quite_ difficult.
 
 ## Installation
 
