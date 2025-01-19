@@ -93,16 +93,25 @@ Myxa automatically creates a local package index file where published packages a
 export MYXA_INDEX="path/to/index.json"
 ```
 
-### Unsupported features
+## Unsupported features
 
-- Integration with Python code
-- Integration with PyPI
-- Support for optional params
-- Support for references to other package members
-- Support for Tuple type
-- Support for dev dependencies/groups/extras
-- Support for upper bounds on dependencies
-- Support for specifying preferred indexes in package metadata
+### Plan to support
+
+- Type references and recursive types
+- Upgrade across major versions
+- Tuples
+
+### Want to support
+
+- Optional function parameters
+- Dev dependencies/groups/extras
+- Specifying extra indexes in package metadata
+- Integration with actual code
+
+### Will not support
+
+- Upper bounds
+- Patch versions
 
 ## Package name
 
