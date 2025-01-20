@@ -99,19 +99,20 @@ export MYXA_INDEX="path/to/index.json"
 
 - Type references and recursive types
 - Upgrade across major versions
-- Tuples
 
 ### Want to support
 
+- Tuples
 - Optional function parameters
 - Dev dependencies/groups/extras
 - Specifying extra indexes in package metadata
 - Integration with actual code
+- Different upgrade behavior for libraries and applications
+- Greater than or equal to constraints
+- Upper bounds
 
 ### Will not support
 
-- Greater than or equal to constraints
-- Upper bounds
 - Semver patch versions
 
 ## Package name
