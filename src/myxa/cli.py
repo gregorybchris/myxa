@@ -66,10 +66,10 @@ def error_handler(manager: Manager, debug: bool = False) -> Generator[None, None
 
 @app.command(help="Initialize a new package")
 def init(
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    info: bool = False,
-    debug: bool = False,
+    name: Annotated[Optional[str], typer.Option("--name")] = None,
+    description: Annotated[Optional[str], typer.Option("--description")] = None,
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
     set_logger_config(info, debug)
     manager = Manager()
@@ -79,12 +79,12 @@ def init(
 
 @app.command(help="Print information about the package")
 def info(  # noqa: PLR0913
-    version: Optional[str] = None,
+    version: Annotated[Optional[str], typer.Option("--version")] = None,
     show_deps: Annotated[bool, typer.Option("--show-deps/--no-deps")] = True,
     show_lock: Annotated[bool, typer.Option("--show-lock/--no-lock")] = True,
     show_interface: Annotated[bool, typer.Option("--show-interface/--no-interface")] = True,
-    info: bool = False,
-    debug: bool = False,
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
     set_logger_config(info, debug)
     manager = Manager()
@@ -107,7 +107,12 @@ app.command(name="show", help="Print information about the package")(info)
 
 
 @app.command(help="Add a dependency to the package")
-def add(dep_name: str, version: Optional[str] = None, info: bool = False, debug: bool = False) -> None:
+def add(
+    dep_name: Annotated[str, typer.Argument(...)],
+    version: Annotated[Optional[str], typer.Option("--version")] = None,
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
@@ -119,7 +124,11 @@ def add(dep_name: str, version: Optional[str] = None, info: bool = False, debug:
 
 
 @app.command(help="Remove a dependency from the package")
-def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
+def remove(
+    dep_name: Annotated[str, typer.Argument(...)],
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
@@ -129,7 +138,10 @@ def remove(dep_name: str, info: bool = False, debug: bool = False) -> None:
 
 
 @app.command(help="Lock the package dependencies")
-def lock(info: bool = False, debug: bool = False) -> None:
+def lock(
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
@@ -140,7 +152,10 @@ def lock(info: bool = False, debug: bool = False) -> None:
 
 
 @app.command(help="Unlock the package dependencies", hidden=True)
-def unlock(info: bool = False, debug: bool = False) -> None:
+def unlock(
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     manager.printer.print_warning("warning: unlock is not a supported Myxa command!")
@@ -151,7 +166,10 @@ def unlock(info: bool = False, debug: bool = False) -> None:
 
 
 @app.command(help="Update all dependencies to the latest compatible version")
-def update(info: bool = False, debug: bool = False) -> None:
+def update(
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
@@ -163,9 +181,9 @@ def update(info: bool = False, debug: bool = False) -> None:
 
 @app.command(help="Check if there are breaking changes")
 def check(
-    version: Optional[str] = None,
-    info: bool = False,
-    debug: bool = False,
+    version: Annotated[Optional[str], typer.Option("--version")] = None,
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
     set_logger_config(info, debug)
     manager = Manager()
@@ -178,9 +196,9 @@ def check(
 
 @app.command(help="Check if there are changes in the package")
 def diff(
-    version: Optional[str] = None,
-    info: bool = False,
-    debug: bool = False,
+    version: Annotated[Optional[str], typer.Option("--version")] = None,
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
     set_logger_config(info, debug)
     manager = Manager()
@@ -195,8 +213,8 @@ def diff(
 def publish(
     major: Annotated[bool, typer.Option("--major")] = False,
     interactive: Annotated[bool, typer.Option("--interactive/--no-interactive")] = True,
-    info: bool = False,
-    debug: bool = False,
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
     set_logger_config(info, debug)
     manager = Manager()
@@ -210,10 +228,10 @@ def publish(
 
 @app.command(help="Yank the current package from the index", hidden=True)
 def yank(
-    version: str,
+    version: Annotated[str, typer.Argument(...)],
     interactive: Annotated[bool, typer.Option("--interactive/--no-interactive")] = True,
-    info: bool = False,
-    debug: bool = False,
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
     version_obj = Version.from_str(version)
     set_logger_config(info, debug)
@@ -230,8 +248,8 @@ def yank(
 def index(
     package_name: Annotated[Optional[str], typer.Option("--package")] = None,
     show_versions: Annotated[bool, typer.Option("--show-versions/--no-versions")] = True,
-    info: bool = False,
-    debug: bool = False,
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
     set_logger_config(info, debug)
     manager = Manager()
@@ -241,7 +259,11 @@ def index(
 
 
 @app.command(help="Set the version of the package", hidden=True)
-def version(version: str, info: bool = False, debug: bool = False) -> None:
+def version(
+    version: Annotated[str, typer.Argument(...)],
+    info: Annotated[bool, typer.Option("--info/--no-info")] = False,
+    debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     manager.printer.print_warning("version is not a supported Myxa command!")
