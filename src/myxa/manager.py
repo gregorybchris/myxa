@@ -22,11 +22,35 @@ class Manager:
     printer: Printer = field(default_factory=Printer)
     pluralizer: Pluralizer = field(default_factory=inflect.engine)
 
-    def init(self, name: str, description: str, package_filepath: Path) -> None:
-        self.printer.print_message(f"Initializing package {name} :smiley:")
+    def init(
+        self,
+        package_filepath: Path,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        interactive: bool = True,
+    ) -> None:
+        if interactive:
+            if name is None:
+                while response := self.printer.input("Enter a package name: "):
+                    # TODO: Check package name has allowed characters
+                    if len(response) > 0:
+                        name = response
+                        break
+            if description is None:
+                while response := self.printer.input("Enter a description for the package: "):
+                    if len(response) > 0:
+                        description = response
+                        break
+
+        if name is None or description is None:
+            msg = "Package name and description are required to initialize a new package"
+            raise UserError(msg)
+
         if package_filepath.exists():
             msg = f"Package file already exists at {package_filepath.absolute()}"
             raise UserError(msg)
+
+        self.printer.print_message(f"Initializing package {name} :smiley:")
 
         package = Package(
             info=PackageInfo(

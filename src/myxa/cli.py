@@ -65,11 +65,16 @@ def error_handler(manager: Manager, debug: bool = False) -> Generator[None, None
 
 
 @app.command(help="Initialize a new package")
-def init(name: str, description: str, info: bool = False, debug: bool = False) -> None:
+def init(
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    info: bool = False,
+    debug: bool = False,
+) -> None:
     set_logger_config(info, debug)
     manager = Manager()
     with error_handler(manager, debug=debug):
-        manager.init(name, description, DEFAULT_PACKAGE_FILEPATH)
+        manager.init(DEFAULT_PACKAGE_FILEPATH, name=name, description=description)
 
 
 @app.command(help="Print information about the package")
