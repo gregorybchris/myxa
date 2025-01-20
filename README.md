@@ -110,8 +110,9 @@ export MYXA_INDEX="path/to/index.json"
 
 ### Will not support
 
+- Greater than or equal to constraints
 - Upper bounds
-- Patch versions
+- Semver patch versions
 
 ## Package name
 
