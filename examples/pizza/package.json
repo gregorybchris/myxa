@@ -1,0 +1,13 @@
+{
+  "info": {
+    "name": "pizza",
+    "description": "Yummy yummy",
+    "version": {
+      "major": 0,
+      "minor": 1
+    },
+    "deps": {}
+  },
+  "lock": null,
+  "members": {}
+}
