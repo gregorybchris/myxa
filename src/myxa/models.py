@@ -125,7 +125,7 @@ class Version(BaseModel):
     major: int
     minor: int
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return f"{self.major}.{self.minor}"
 
     @classmethod
@@ -192,7 +192,7 @@ class Index(BaseModel):
 
     def add_package(self, package: Package) -> None:
         package = deepcopy(package)
-        version_str = package.info.version.to_str()
+        version_str = str(package.info.version)
         if namespace := self.namespaces.get(package.info.name):
             if version_str in namespace.packages:
                 msg = f"Package {package.info.name}=={version_str} already exists in provided index: {self.name}"
@@ -205,13 +205,13 @@ class Index(BaseModel):
 
     def remove_package(self, package: Package, version: Version) -> None:
         if namespace := self.namespaces.get(package.info.name):
-            if version.to_str() in namespace.packages:
-                del namespace.packages[version.to_str()]
+            if str(version) in namespace.packages:
+                del namespace.packages[str(version)]
                 if len(namespace.packages) == 0:
                     del self.namespaces[package.info.name]
             else:
                 msg = (
-                    f"Package {package.info.name} version {version.to_str()}"
+                    f"Package {package.info.name} version {version!s}"
                     f" not found in index {self.name}, unable to yank"
                 )
                 raise UserError(msg)
@@ -231,14 +231,14 @@ class Index(BaseModel):
 
     def get_package(self, package_name: str, version: Version) -> Package:
         namespace = self.get_namespace(package_name)
-        if package := namespace.packages.get(version.to_str()):
+        if package := namespace.packages.get(str(version)):
             return package
-        msg = f"Package {package_name}=={version.to_str()} not found in the provided index: {self.name}"
+        msg = f"Package {package_name}=={version!s} not found in the provided index: {self.name}"
         raise UserError(msg)
 
     def get_latest_package(self, package_name: str) -> Package:
         namespace = self.get_namespace(package_name)
         versions = [Version.from_str(s) for s in namespace.packages]
         latest_version = max(versions)
-        version_str = latest_version.to_str()
+        version_str = str(latest_version)
         return namespace.packages[version_str]

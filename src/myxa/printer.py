@@ -115,7 +115,7 @@ class Printer:
         table.add_column("", style="steel_blue1")
         table.add_row("Name", info.name)
         table.add_row("Description", info.description)
-        table.add_row("Version", info.version.to_str())
+        table.add_row("Version", str(info.version))
 
         padding = Padding("")
 
@@ -129,7 +129,7 @@ class Printer:
                     version_color = "[green]" if is_latest_major else "[sandy_brown]"
                 else:
                     version_color = "[white]"
-                deps_tree.add(f"[steel_blue1]{dep.name}[bright_black]~={version_color}{dep.version.to_str()}")
+                deps_tree.add(f"[steel_blue1]{dep.name}[bright_black]~={version_color}{dep.version!s}")
             if not info.deps:
                 deps_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, deps_tree)
@@ -143,7 +143,7 @@ class Printer:
                     version_color = "[green]" if is_latest_major else "[sandy_brown]"
                 else:
                     version_color = "[white]"
-                lock_tree.add(f"[steel_blue1]{dep.name}[bright_black]=={version_color}{dep.version.to_str()}")
+                lock_tree.add(f"[steel_blue1]{dep.name}[bright_black]=={version_color}{dep.version!s}")
             if not package.lock.deps:
                 lock_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, lock_tree)
@@ -174,7 +174,7 @@ class Printer:
                         else:
                             version_color = "[white]"
                         namespace_tree.add(
-                            f"[steel_blue3]{package.info.name}[bright_black]=={version_color}{package.info.version.to_str()}"
+                            f"[steel_blue3]{package.info.name}[bright_black]=={version_color}{package.info.version!s}"
                         )
                     if not namespace.packages:
                         namespace_tree.add("\\[none]", style="steel_blue3")
@@ -200,10 +200,10 @@ class Printer:
             )
 
         for dep_name in additions:
-            self.print_message(f"[blue]+ {dep_name}~={lock_2.deps[dep_name].version.to_str()}")
+            self.print_message(f"[blue]+ {dep_name}~={lock_2.deps[dep_name].version!s}")
         if lock_1 is not None:
             for dep_name in removals:
-                self.print_message(f"[red]- {dep_name}~={lock_1.deps[dep_name].version.to_str()}")
+                self.print_message(f"[red]- {dep_name}~={lock_1.deps[dep_name].version!s}")
 
     def print_changes(self, changes: list[Change], comparison_package: Package, breaking_only: bool = False) -> None:
         changes = [change for change in changes if not breaking_only or change.is_breaking()]
@@ -211,12 +211,12 @@ class Printer:
         if breaking_only:
             self.print_error(
                 f"Found {len(changes)} compatibility {self.pluralizer.plural_noun('break', len(changes))}"
-                f" compared to {comparison_package.info.name}=={comparison_package.info.version.to_str()}"
+                f" compared to {comparison_package.info.name}=={comparison_package.info.version!s}"
             )
         else:
             self.print_message(
                 f"Found {len(changes)} {self.pluralizer.plural_noun('change', len(changes))}"
-                f" compared to {comparison_package.info.name}=={comparison_package.info.version.to_str()}"
+                f" compared to {comparison_package.info.name}=={comparison_package.info.version!s}"
             )
 
         for change in changes:

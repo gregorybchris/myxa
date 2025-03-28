@@ -95,7 +95,7 @@ class Manager:
             dep_package = index.get_latest_package(dep_name)
             version = dep_package.info.version
         package.info.deps[dep_name] = Dep(name=dep_name, version=version)
-        self.printer.print_success(f"Added {dep_name}~={version.to_str()} to {package.info.name}")
+        self.printer.print_success(f"Added {dep_name}~={version} to {package.info.name}")
 
     def remove(self, package: Package, dep_name: str) -> None:
         self.printer.print_message(f"Removing dependency {dep_name} from package {package.info.name}...")
@@ -191,9 +191,7 @@ class Manager:
             latest_package = index.get_latest_package(package.info.name)
             latest_version = latest_package.info.version
 
-            self.printer.print_message(
-                f"The latest published version of {package.info.name} is {latest_version.to_str()}"
-            )
+            self.printer.print_message(f"The latest published version of {package.info.name} is {latest_version!s}")
 
             checker = Checker()
             changes = checker.diff(latest_package, package)
@@ -201,19 +199,17 @@ class Manager:
             if len(breaks) > 0:
                 self.printer.print_changes(changes, latest_package, breaking_only=True)
                 candidate_version = latest_version.next_major()
-                self.printer.print_warning(f"Will increment the major version to {candidate_version.to_str()}")
+                self.printer.print_warning(f"Will increment the major version to {candidate_version!s}")
             elif major:
                 candidate_version = latest_version.next_major()
-                self.printer.print_message(
-                    f"Major flag set. Will increment the major version to {candidate_version.to_str()}"
-                )
+                self.printer.print_message(f"Major flag set. Will increment the major version to {candidate_version!s}")
             else:
                 candidate_version = latest_version.next_minor()
-                self.printer.print_message(f"Will increment the minor version to {candidate_version.to_str()}")
+                self.printer.print_message(f"Will increment the minor version to {candidate_version!s}")
         except UserError:
             self.printer.print_message(
                 f"Package {package.info.name} has not been published yet."
-                f" The initial version will be set automatically to {Version.default().to_str()}"
+                f" The initial version will be set automatically to {Version.default()!s}"
             )
             candidate_version = Version.default()
 
@@ -226,14 +222,14 @@ class Manager:
                     self.set_version(package, candidate_version)
                     index.add_package(package)
                     self.printer.print_success(
-                        f"Published {package.info.name} version {candidate_version.to_str()} to index {index.name}"
+                        f"Published {package.info.name} version {candidate_version!s} to index {index.name}"
                     )
                     break
         else:
             self.set_version(package, candidate_version)
             index.add_package(package)
             self.printer.print_success(
-                f"Force published {package.info.name} version {candidate_version.to_str()} to index {index.name}"
+                f"Force published {package.info.name} version {candidate_version!s} to index {index.name}"
             )
 
     def yank(
@@ -253,19 +249,17 @@ class Manager:
                 if response.lower() == "y":
                     index.remove_package(package, version)
                     self.printer.print_success(
-                        f"Yanked {package.info.name} version {version.to_str()} from index {index.name}"
+                        f"Yanked {package.info.name} version {version!s} from index {index.name}"
                     )
                     break
         else:
             index.remove_package(package, version)
-            self.printer.print_success(
-                f"Force yanked {package.info.name} version {version.to_str()} from index {index.name}"
-            )
+            self.printer.print_success(f"Force yanked {package.info.name} version {version!s} from index {index.name}")
 
     def set_version(self, package: Package, version: Version) -> None:
-        self.printer.print_message(f"Setting version of package {package.info.name} to {version.to_str()}...")
+        self.printer.print_message(f"Setting version of package {package.info.name} to {version!s}...")
         package.info.version = version
-        self.printer.print_success(f"Set version of {package.info.name} to {version.to_str()}")
+        self.printer.print_success(f"Set version of {package.info.name} to {version!s}")
 
     def load_package(self, package_filepath: Path) -> Package:
         if not package_filepath.exists():

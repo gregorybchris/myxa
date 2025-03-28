@@ -65,7 +65,7 @@ class TestPrinter:
         text_output = clean_colors(capture_result.out)
 
         assert euler_package.info.name in text_output
-        assert euler_package.info.version.to_str() in text_output
+        assert str(euler_package.info.version) in text_output
         assert euler_package.info.description in text_output
 
         if show_deps:

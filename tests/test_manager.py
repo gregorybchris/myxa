@@ -285,8 +285,8 @@ class TestManager:
         new_version = euler_package.info.version
 
         manager.yank(euler_package, old_version, primary_index, interactive=False)
-        assert old_version.to_str() not in primary_index.namespaces[euler_package.info.name].packages
-        assert new_version.to_str() in primary_index.namespaces[euler_package.info.name].packages
+        assert str(old_version) not in primary_index.namespaces[euler_package.info.name].packages
+        assert str(new_version) in primary_index.namespaces[euler_package.info.name].packages
 
     def test_yank_missing_package_raises_user_error(
         self,

@@ -27,9 +27,9 @@ class Resolver:
 
         # The root package is required to satisfy all of its dependencies
         flat_deps[package.info.name] = {}
-        flat_deps[package.info.name][package.info.version.to_str()] = {}
+        flat_deps[package.info.name][str(package.info.version)] = {}
         for dep_name, dep in package.info.deps.items():
-            flat_deps[package.info.name][package.info.version.to_str()][dep_name] = dep.version.to_str()
+            flat_deps[package.info.name][str(package.info.version)][dep_name] = str(dep.version)
 
         versions_map = self._get_versions_map(flat_deps)
 
@@ -55,11 +55,11 @@ class Resolver:
             flat_deps[dep_name] = {}
             sorted_versions = sorted(self.index.list_versions(dep_name), reverse=True)
             for dep_version in sorted_versions:
-                verstr = dep_version.to_str()
+                verstr = str(dep_version)
                 flat_deps[dep_name][verstr] = {}
                 dep_package = self.index.get_package(dep_name, dep_version)
                 for sub_dep_name, sub_dep in dep_package.info.deps.items():
-                    sub_dep_verstr = sub_dep.version.to_str()
+                    sub_dep_verstr = str(sub_dep.version)
                     flat_deps[dep_name][verstr][sub_dep_name] = sub_dep_verstr
                 self._fill_flat_deps(dep_package, flat_deps)
 
