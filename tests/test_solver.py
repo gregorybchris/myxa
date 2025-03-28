@@ -75,6 +75,14 @@ class TestSolver:
 
 
 class TestSolution:
+    def test_to_str(self) -> None:
+        solution = Solution()
+        assert str(solution) == "<empty>"
+        solution.add(Assignment("euler", Version(1, 2)))
+        assert str(solution) == "<euler==1.2>"
+        solution.add(Assignment("webserver", Version(0, 1)))
+        assert str(solution) == "<euler==1.2, webserver==0.1>"
+
     def test_package_compatible_with_empty_solution(self) -> None:
         package = Package("euler", Version(1, 2))
         solution = Solution()
@@ -95,7 +103,17 @@ class TestSolution:
         assert not solution.is_compatible_with(package)
 
 
+class TestAssignment:
+    def test_to_str(self) -> None:
+        assignment = Assignment("euler", Version(1, 2))
+        assert str(assignment) == "euler==1.2"
+
+
 class TestDependency:
+    def test_to_str(self) -> None:
+        dependency = Dependency("euler", Version(1, 2))
+        assert str(dependency) == "euler~=1.2"
+
     def test_higher_minor_satisfies_lower_minor(self) -> None:
         version = Version(1, 2)
         dependency = Dependency("euler", Version(1, 1))

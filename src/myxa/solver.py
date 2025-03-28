@@ -12,11 +12,11 @@ class Version:
     major: int
     minor: int
 
-    def to_str(self) -> str:
-        return f"{self.major}.{self.minor}"
-
     def __hash__(self) -> int:
-        return hash(self.to_str())
+        return hash(str(self))
+
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}"
 
 
 @dataclass
@@ -24,11 +24,11 @@ class Dependency:
     name: Name
     version: Version
 
-    def to_str(self) -> str:
-        return f"{self.name}~={self.version.to_str()}"
-
     def is_satisfied_by(self, version: Version) -> bool:
         return version.major == self.version.major and version.minor >= self.version.minor
+
+    def __str__(self) -> str:
+        return f"{self.name}~={self.version}"
 
 
 @dataclass
@@ -36,8 +36,8 @@ class Assignment:
     name: Name
     version: Version
 
-    def to_str(self) -> str:
-        return f"{self.name}=={self.version.to_str()}"
+    def __str__(self) -> str:
+        return f"{self.name}=={self.version}"
 
 
 @dataclass
@@ -46,14 +46,14 @@ class Package:
     version: Version
     dependencies: list[Dependency] = field(default_factory=list)
 
-    def to_str(self) -> str:
-        return f"{self.name}=={self.version.to_str()}"
-
     def to_assignment(self) -> Assignment:
         return Assignment(name=self.name, version=self.version)
 
     def list_dependencies(self) -> list[Dependency]:
         return self.dependencies
+
+    def __str__(self) -> str:
+        return f"{self.name}=={self.version}"
 
 
 @dataclass(kw_only=True)
@@ -64,9 +64,6 @@ class Index:
         if package.name not in self.packages:
             self.packages[package.name] = {}
         self.packages[package.name][package.version] = package
-
-    def iter_versions(self, name: Name) -> Iterator[Package]:
-        return iter(self.packages[name].values())
 
     def iter_versions_sorted(self, name: Name) -> Iterator[Package]:
         return iter(reversed(self.packages[name].values()))
@@ -107,13 +104,13 @@ class Solution:
 
         return True
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         if len(self.assignments) == 0:
             return "<empty>"
-        return "<" + ", ".join(assignment.to_str() for assignment in self.iter()) + ">"
+        return "<" + ", ".join(str(assignment) for assignment in self.iter()) + ">"
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Solver:
     index: Index
 
