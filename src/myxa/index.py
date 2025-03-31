@@ -41,10 +41,7 @@ class Index(BaseModel):
                 if len(namespace.packages) == 0:
                     del self.namespaces[package.info.name]
             else:
-                msg = (
-                    f"Package {package.info.name} version {version!s}"
-                    f" not found in index {self.name}, unable to yank"
-                )
+                msg = f"Package {package.info.name} version {version!s} not found in index {self.name}, unable to yank"
                 raise UserError(msg)
         else:
             msg = f"Package {package.info.name} not found in index {self.name}, unable to yank"
