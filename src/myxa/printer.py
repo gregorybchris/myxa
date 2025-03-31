@@ -136,7 +136,7 @@ class Printer:
             group_renderables = (*group_renderables, padding, dependencies_tree)
 
         if show_lock and package.lock is not None:
-            lock_tree = Tree("Locked dependencies", style="steel_blue3")
+            lock_tree = Tree("Lock", style="steel_blue3")
             for pin in package.lock.iter():
                 if index is not None:
                     latest_dep_package = index.get_latest(pin.name)

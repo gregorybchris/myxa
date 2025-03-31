@@ -73,10 +73,10 @@ class TestPrinter:
             assert "Dependencies" not in text_output
 
         if show_lock:
-            assert "Locked dependencies" in text_output
+            assert "Lock" in text_output
             assert "[none]" in text_output
         else:
-            assert "Locked dependencies" not in text_output
+            assert "Lock" not in text_output
 
         if show_members:
             assert "Members" in text_output
