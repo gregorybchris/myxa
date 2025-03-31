@@ -22,9 +22,15 @@ Tracking type signatures also enables Myxa to support safe upgrading across majo
 
 > Note: Myxa compatibility checks do not cover runtime behavior and are therefore imperfect. Package maintainers are still expected to manually bump major versions for runtime compatibility breaks.
 
+## Sample
+
+Running `mx info` shows an overview of a package. In this sample, the current package (euler) has taken a dependency on the interlet and jeans packages. The package flatty was pulled in as a dependency of interlet. Yellow version numbers indicate packages with newer major versions available in the index.
+
 <div align="center">
   <img src="assets/sample.png" width=700>
 </div>
+
+Modules are in purple, types are in yellow, and package member names are in light blue and red. Primitive types like `Int`, `Str`, and `Float` are available as builtins. `Dict`, `Set`, `List`, and `Tuple` collection types are supported as well as `Struct` and `Enum`.
 
 ## Installation
 
