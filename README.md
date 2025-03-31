@@ -16,7 +16,7 @@ Myxa enables developers to keep their package dependencies up to date and lowers
 
 ### How it works
 
-Myxa tracks type signatures of everything in a package. When a package maintainer tries to publish a new version of their package, Myxa compares the package changes against previous published versions. When a breaking change is detected, `myxa publish` requires a major version bump.
+Myxa tracks type signatures for everything in a package. When a package maintainer tries to publish a new version of their package, Myxa compares the package against previous published versions. When a breaking change is detected, `myxa publish` requires a major version bump.
 
 Tracking type signatures also enables Myxa to support safe upgrading across major version boundaries. For large packages, most of the time breaking changes only affect a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade to the latest compatible major version.
 
