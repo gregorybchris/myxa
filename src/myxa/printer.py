@@ -200,10 +200,10 @@ class Printer:
                 f" and {len(removals)} {self.pluralizer.plural_noun('removal', len(removals))}"
             )
 
-        for name in additions:
+        for name in sorted(additions):
             self.print_message(f"[blue]+ {name}~={lock_2[name].version!s}")
         if lock_1 is not None:
-            for name in removals:
+            for name in sorted(removals):
                 self.print_message(f"[red]- {name}~={lock_1[name].version!s}")
 
     def print_changes(self, changes: list[Change], comparison_package: Package, breaking_only: bool = False) -> None:
