@@ -1,6 +1,7 @@
 import builtins
 import logging
 from dataclasses import dataclass, field
+from functools import cmp_to_key
 from typing import Optional
 
 import inflect
@@ -68,13 +69,13 @@ class Printer:
                 var_node_type_str = self.get_node_type_str(var_node)
                 tree.add(f"[steel_blue1]{name}[bright_black]: {var_node_type_str}")
             case Struct(name=name, fields=fields):
-                name_str = f"[pale_green3]Struct[bright_black]([steel_blue1]{name}[bright_black])"
+                name_str = f"[light_goldenrod2]Struct[bright_black]([steel_blue1]{name}[bright_black])"
                 struct_tree = tree.add(name_str)
                 for field_name, field_node in fields.items():
                     field_node_type_str = self.get_node_type_str(field_node.var_node)
                     struct_tree.add(f"[red]{field_name}[bright_black]: {field_node_type_str}")
             case Enum(name=name, variants=variants):
-                name_str = f"[pale_green3]Enum[bright_black]([steel_blue1]{name}[bright_black])"
+                name_str = f"[light_goldenrod2]Enum[bright_black]([steel_blue1]{name}[bright_black])"
                 enum_tree = tree.add(name_str)
                 for variant_name, variant_node in variants.items():
                     variant_node_type_str = self.get_node_type_str(variant_node.var_node)
@@ -96,7 +97,7 @@ class Printer:
                 tree.add(func_str)
             case Mod(name=name, members=members):
                 mod_tree = tree.add(name, style="purple")
-                for member in members.values():
+                for member in sorted(members.values(), key=cmp_to_key(self.compare_nodes)):
                     self._add_member_node(member, mod_tree)
             case _:
                 msg = f"Node type not handled: {type_builtin(member_node)}"
@@ -154,7 +155,7 @@ class Printer:
 
         if show_members:
             mod_tree = Tree("Members", style="steel_blue3")
-            for member_node in package.members.list():
+            for member_node in sorted(package.members.list(), key=cmp_to_key(self.compare_nodes)):
                 self._add_member_node(member_node, mod_tree)
             if not package.members:
                 mod_tree.add("\\[empty]", style="steel_blue1")
@@ -361,3 +362,35 @@ class Printer:
                 return f"{g}Const{b}[{g}{var_node_type_str}{b}]"
             case _:
                 return f"{g}{self.get_node_str(node)}"
+
+    def compare_nodes(self, node_a: MemberNode, node_b: MemberNode) -> int:
+        priority_a = self.get_node_priority(node_a)
+        priority_b = self.get_node_priority(node_b)
+
+        if priority_a < priority_b:
+            return -1
+        if priority_a > priority_b:
+            return 1
+
+        if hasattr(node_a, "name") and hasattr(node_b, "name"):
+            if node_a.name < node_b.name:
+                return -1
+            if node_a.name > node_b.name:
+                return 1
+
+        return 0
+
+    def get_node_priority(self, node: MemberNode) -> int:
+        match node:
+            case Mod():
+                return 5
+            case Func():
+                return 4
+            case Struct():
+                return 3
+            case Enum():
+                return 2
+            case Const():
+                return 1
+            case _:
+                return 0
