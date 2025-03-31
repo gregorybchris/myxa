@@ -121,7 +121,7 @@ class Printer:
         group_renderables: tuple = (table,)
         if show_dependencies:
             dependencies_tree = Tree("Dependencies", style="steel_blue3")
-            for dependency in package.dependencies.list():
+            for dependency in package.dependencies.list_alphabetical():
                 if index is not None:
                     latest_dep_package = index.get_latest(dependency.name)
                     is_latest_major = dependency.version.major == latest_dep_package.info.version.major
@@ -137,7 +137,7 @@ class Printer:
 
         if show_lock and package.lock is not None:
             lock_tree = Tree("Lock", style="steel_blue3")
-            for pin in package.lock.iter():
+            for pin in package.lock.list_alphabetical():
                 if index is not None:
                     latest_dep_package = index.get_latest(pin.name)
                     is_latest_major = pin.version.major == latest_dep_package.info.version.major

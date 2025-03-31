@@ -45,6 +45,9 @@ class Dependencies(BaseModel):
     def pop(self, name: str) -> Optional[Dependency]:
         return self.direct.pop(name, None)
 
+    def list_alphabetical(self) -> list[Dependency]:
+        return sorted(self.direct.values(), key=lambda dep: dep.name)
+
     def list(self) -> list[Dependency]:
         return list(self.direct.values())
 
@@ -68,6 +71,9 @@ class Lock(BaseModel):
 
     def iter(self) -> Iterator[Pin]:
         return iter(self.pins.values())
+
+    def list_alphabetical(self) -> list[Pin]:
+        return sorted(self.pins.values(), key=lambda pin: pin.name)
 
     def add(self, pin: Pin) -> None:
         self.pins[pin.name] = pin
