@@ -22,6 +22,10 @@ Tracking type signatures also enables Myxa to support safe upgrading across majo
 
 > Note: Myxa compatibility checks do not cover runtime behavior and are therefore imperfect. Package maintainers are still expected to manually bump major versions for runtime compatibility breaks.
 
+<div align="center">
+  <img src="assets/sample.png" width=700>
+</div>
+
 ## Installation
 
 Install using [uv](https://docs.astral.sh/uv)
