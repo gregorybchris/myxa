@@ -1,140 +1,98 @@
-from myxa.solver import Assignment, Dependency, Index, Package, Solution, Solver, Version
+import pytest
+
+from myxa.dependency import Dependency
+from myxa.errors import UserError
+from myxa.index import Index
+from myxa.manager import Manager
+from myxa.package import Lock, Package
+from myxa.pin import Pin
+from myxa.solver import Solver
 
 
 class TestSolver:
     def test_solve_succeeds_with_no_dependencies(self) -> None:
-        index = Index()
-        target = Package("euler", Version(1, 2))
+        index = Index(name="temp")
+        target = Package.new("euler", "1.2", [])
         solver = Solver(index=index)
-        solution = solver.solve(target)
-        assert solution == Solution()
+        lock = solver.solve(target)
+        assert lock == Lock()
 
     def test_solve_succeeds_with_middle_dependency_compatible(self) -> None:
-        index = Index()
-        target = Package(
+        index = Index(name="temp")
+        target = Package.new(
             "app",
-            Version(1, 0),
-            [
-                Dependency("euler", Version(2, 0)),
-                Dependency("webserver", Version(0, 1)),
-            ],
+            "1.0",
+            [Dependency.new("euler", "2.0"), Dependency.new("webserver", "0.1")],
         )
-        index.add(Package("webserver", Version(0, 1), [Dependency("euler", Version(1, 0))]))
-        index.add(Package("webserver", Version(0, 2), [Dependency("euler", Version(2, 0))]))
-        index.add(Package("webserver", Version(0, 3), [Dependency("euler", Version(3, 0))]))
-        index.add(Package("euler", Version(1, 0)))
-        index.add(Package("euler", Version(2, 0)))
-        index.add(Package("euler", Version(3, 0)))
+        index.add(Package.new("webserver", "0.1", [Dependency.new("euler", "1.0")]))
+        index.add(Package.new("webserver", "0.2", [Dependency.new("euler", "2.0")]))
+        index.add(Package.new("webserver", "0.3", [Dependency.new("euler", "3.0")]))
+        index.add(Package.new("euler", "1.0", []))
+        index.add(Package.new("euler", "2.0", []))
+        index.add(Package.new("euler", "3.0", []))
         solver = Solver(index=index)
-        solution = solver.solve(target)
-        assert solution == Solution.new([Assignment("euler", Version(2, 0)), Assignment("webserver", Version(0, 2))])
+        lock = solver.solve(target)
+        assert lock == Lock.new([Pin.new("euler", "2.0"), Pin.new("webserver", "0.2")])
 
     def test_solve_succeeds_with_highest_minor_versions(self) -> None:
-        index = Index()
-        target = Package(
-            "app",
-            Version(1, 2),
-            [
-                Dependency("euler", Version(0, 1)),
-                Dependency("webserver", Version(0, 2)),
-            ],
-        )
-        index.add(Package("euler", Version(0, 1)))
-        index.add(Package("euler", Version(0, 2)))
-        index.add(Package("euler", Version(0, 3)))
-        index.add(Package("webserver", Version(0, 2), [Dependency("euler", Version(0, 2))]))
+        index = Index(name="temp")
+        target = Package.new("app", "1.2", [Dependency.new("euler", "0.1"), Dependency.new("webserver", "0.2")])
+        index.add(Package.new("euler", "0.1", []))
+        index.add(Package.new("euler", "0.2", []))
+        index.add(Package.new("euler", "0.3", []))
+        index.add(Package.new("webserver", "0.2", [Dependency.new("euler", "0.2")]))
         solver = Solver(index=index)
-        solution = solver.solve(target)
-        assert solution == Solution.new([Assignment("euler", Version(0, 3)), Assignment("webserver", Version(0, 2))])
+        lock = solver.solve(target)
+        assert lock == Lock.new([Pin.new("euler", "0.3"), Pin.new("webserver", "0.2")])
 
     def test_solve_fails_on_dependency_conflict(self) -> None:
-        index = Index()
-        target = Package(
+        index = Index(name="temp")
+        target = Package.new(
             "app",
-            Version(1, 2),
-            [
-                Dependency("euler", Version(0, 1)),
-                Dependency("webserver", Version(0, 2)),
-            ],
+            "1.2",
+            [Dependency.new("euler", "0.1"), Dependency.new("webserver", "0.2")],
         )
-        index.add(Package("euler", Version(0, 1)))
-        index.add(Package("euler", Version(1, 0)))
-        index.add(Package("webserver", Version(0, 2), [Dependency("euler", Version(1, 0))]))
+        index.add(Package.new("euler", "0.1", []))
+        index.add(Package.new("euler", "1.0", []))
+        index.add(Package.new("webserver", "0.2", [Dependency.new("euler", "1.0")]))
         solver = Solver(index=index)
-        solution = solver.solve(target)
-        assert solution is None
+
+        with pytest.raises(UserError, match="Failed to solve package dependencies, no valid configuration found"):
+            solver.solve(target)
 
     def test_solve_succeeds_on_cycle_with_current_package(self) -> None:
-        index = Index()
-        target = Package("euler", Version(2, 0), [Dependency("webserver", Version(1, 0))])
-        index.add(Package("euler", Version(1, 0)))
-        index.add(Package("webserver", Version(1, 0), [Dependency("euler", Version(1, 0))]))
+        index = Index(name="temp")
+        target = Package.new("euler", "2.0", [Dependency.new("webserver", "1.0")])
+        index.add(Package.new("euler", "1.0", []))
+        index.add(Package.new("webserver", "1.0", [Dependency.new("euler", "1.0")]))
         solver = Solver(index=index)
-        solution = solver.solve(target)
-        assert solution == Solution.new([Assignment("webserver", Version(1, 0))])
+        lock = solver.solve(target)
+        assert lock == Lock.new([Pin.new("webserver", "1.0")])
 
+    def test_ecosystem(  # noqa: PLR0913
+        self,
+        manager: Manager,
+        solver: Solver,
+        primary_index: Index,
+        app_package: Package,
+        euler_package: Package,
+        interlet_package: Package,
+        flatty_package: Package,
+    ) -> None:
+        manager.lock(euler_package, primary_index)
+        manager.publish(euler_package, primary_index, interactive=False)
+        manager.add(app_package, euler_package.info.name, primary_index, euler_package.info.version)
 
-class TestSolution:
-    def test_to_str(self) -> None:
-        solution = Solution()
-        assert str(solution) == "<empty>"
-        solution.add(Assignment("euler", Version(1, 2)))
-        assert str(solution) == "<euler==1.2>"
-        solution.add(Assignment("webserver", Version(0, 1)))
-        assert str(solution) == "<euler==1.2, webserver==0.1>"
+        manager.lock(flatty_package, primary_index)
+        manager.publish(flatty_package, primary_index, interactive=False)
+        manager.add(interlet_package, flatty_package.info.name, primary_index, flatty_package.info.version)
 
-    def test_package_compatible_with_empty_solution(self) -> None:
-        package = Package("euler", Version(1, 2))
-        solution = Solution()
-        assert solution.is_compatible_with(package)
+        manager.lock(interlet_package, primary_index)
+        manager.publish(interlet_package, primary_index, interactive=False)
+        manager.add(app_package, interlet_package.info.name, primary_index, interlet_package.info.version)
 
-    def test_package_compatible_with_solution_containing_self(self) -> None:
-        package = Package("euler", Version(1, 2))
-        solution = Solution()
-        assignment = Assignment("euler", Version(1, 2))
-        solution.add(assignment)
-        assert solution.is_compatible_with(package)
-
-    def test_package_incompatible_with_solution(self) -> None:
-        package = Package("euler", Version(1, 2))
-        solution = Solution()
-        assignment = Assignment("euler", Version(1, 1))
-        solution.add(assignment)
-        assert not solution.is_compatible_with(package)
-
-
-class TestAssignment:
-    def test_to_str(self) -> None:
-        assignment = Assignment("euler", Version(1, 2))
-        assert str(assignment) == "euler==1.2"
-
-
-class TestDependency:
-    def test_to_str(self) -> None:
-        dependency = Dependency("euler", Version(1, 2))
-        assert str(dependency) == "euler~=1.2"
-
-    def test_higher_minor_satisfies_lower_minor(self) -> None:
-        version = Version(1, 2)
-        dependency = Dependency("euler", Version(1, 1))
-        assert dependency.is_satisfied_by(version)
-
-    def test_lower_minor_does_not_satisfy_higher_minor(self) -> None:
-        version = Version(1, 1)
-        dependency = Dependency("euler", Version(1, 2))
-        assert not dependency.is_satisfied_by(version)
-
-    def test_higher_major_does_not_satisfy_lower_major(self) -> None:
-        version = Version(2, 0)
-        dependency = Dependency("euler", Version(1, 2))
-        assert not dependency.is_satisfied_by(version)
-
-    def test_lower_major_does_not_satisfy_higher_major(self) -> None:
-        version = Version(0, 1)
-        dependency = Dependency("euler", Version(1, 0))
-        assert not dependency.is_satisfied_by(version)
-
-    def test_same_version_satisfies_dependency(self) -> None:
-        version = Version(1, 2)
-        dependency = Dependency("euler", Version(1, 2))
-        assert dependency.is_satisfied_by(version)
+        lock = solver.solve(app_package)
+        assert len(lock) == 3
+        for package in [euler_package, flatty_package, interlet_package]:
+            lock_package = lock.get(package.info.name)
+            assert lock_package.version == package.info.version

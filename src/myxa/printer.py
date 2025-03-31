@@ -13,7 +13,8 @@ from rich.tree import Tree
 from myxa.checker import Addition, Change, MemberNodeChange, Removal, VarNodeChange
 from myxa.errors import InternalError
 from myxa.extra_types import Pluralizer
-from myxa.models import (
+from myxa.index import Index
+from myxa.nodes import (
     Bool,
     Const,
     Dict,
@@ -21,7 +22,6 @@ from myxa.models import (
     Field,
     Float,
     Func,
-    Index,
     Int,
     List,
     Maybe,
@@ -29,14 +29,13 @@ from myxa.models import (
     Mod,
     Node,
     Null,
-    Package,
-    PackageLock,
     Param,
     Set,
     Str,
     Struct,
     Variant,
 )
+from myxa.package import Lock, Package
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +102,9 @@ class Printer:
     def print_package(  # noqa: PLR0912
         self,
         package: Package,
-        show_deps: bool = True,
+        show_dependencies: bool = True,
         show_lock: bool = True,
-        show_interface: bool = True,
+        show_members: bool = True,
         index: Optional[Index] = None,
     ) -> None:
         info = package.info
@@ -120,38 +119,40 @@ class Printer:
         padding = Padding("")
 
         group_renderables: tuple = (table,)
-        if show_deps:
-            deps_tree = Tree("Dependencies", style="steel_blue3")
-            for dep in info.deps.values():
+        if show_dependencies:
+            dependencies_tree = Tree("Dependencies", style="steel_blue3")
+            for dependency in package.dependencies.list():
                 if index is not None:
-                    latest_dep_package = index.get_latest_package(dep.name)
-                    is_latest_major = dep.version.major == latest_dep_package.info.version.major
+                    latest_dep_package = index.get_latest(dependency.name)
+                    is_latest_major = dependency.version.major == latest_dep_package.info.version.major
                     version_color = "[green]" if is_latest_major else "[sandy_brown]"
                 else:
                     version_color = "[white]"
-                deps_tree.add(f"[steel_blue1]{dep.name}[bright_black]~={version_color}{dep.version!s}")
-            if not info.deps:
-                deps_tree.add("\\[none]", style="steel_blue1")
-            group_renderables = (*group_renderables, padding, deps_tree)
+                dependencies_tree.add(
+                    f"[steel_blue1]{dependency.name}[bright_black]~={version_color}{dependency.version!s}"
+                )
+            if not package.dependencies:
+                dependencies_tree.add("\\[none]", style="steel_blue1")
+            group_renderables = (*group_renderables, padding, dependencies_tree)
 
         if show_lock and package.lock is not None:
             lock_tree = Tree("Locked dependencies", style="steel_blue3")
-            for dep in package.lock.deps.values():
+            for pin in package.lock.iter():
                 if index is not None:
-                    latest_dep_package = index.get_latest_package(dep.name)
-                    is_latest_major = dep.version.major == latest_dep_package.info.version.major
+                    latest_dep_package = index.get_latest(pin.name)
+                    is_latest_major = pin.version.major == latest_dep_package.info.version.major
                     version_color = "[green]" if is_latest_major else "[sandy_brown]"
                 else:
                     version_color = "[white]"
-                lock_tree.add(f"[steel_blue1]{dep.name}[bright_black]=={version_color}{dep.version!s}")
-            if not package.lock.deps:
+                lock_tree.add(f"[steel_blue1]{pin.name}[bright_black]=={version_color}{pin.version!s}")
+            if len(package.lock) == 0:
                 lock_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, lock_tree)
 
-        if show_interface:
-            mod_tree = Tree("Interface", style="steel_blue3")
-            for node in package.members.values():
-                self._add_member_node(node, mod_tree)
+        if show_members:
+            mod_tree = Tree("Members", style="steel_blue3")
+            for member_node in package.members.list():
+                self._add_member_node(member_node, mod_tree)
             if not package.members:
                 mod_tree.add("\\[empty]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, mod_tree)
@@ -183,12 +184,12 @@ class Printer:
         panel = Panel(tree, title=index.name, border_style="bright_black")
         self.console.print(panel)
 
-    def print_lock_diff(self, lock_1: Optional[PackageLock], lock_2: PackageLock) -> None:
-        old_deps = set(lock_1.deps.keys()) if lock_1 is not None else set()
-        new_deps = set(lock_2.deps.keys())
+    def print_lock_diff(self, lock_1: Optional[Lock], lock_2: Lock) -> None:
+        old_names = {pin.name for pin in lock_1.iter()} if lock_1 is not None else set()
+        new_names = {pin.name for pin in lock_2.iter()}
 
-        additions = new_deps - old_deps
-        removals = old_deps - new_deps
+        additions = new_names - old_names
+        removals = old_names - new_names
 
         if not additions and not removals:
             self.print_success("Project lock is up to date")
@@ -199,11 +200,11 @@ class Printer:
                 f" and {len(removals)} {self.pluralizer.plural_noun('removal', len(removals))}"
             )
 
-        for dep_name in additions:
-            self.print_message(f"[blue]+ {dep_name}~={lock_2.deps[dep_name].version!s}")
+        for name in additions:
+            self.print_message(f"[blue]+ {name}~={lock_2[name].version!s}")
         if lock_1 is not None:
-            for dep_name in removals:
-                self.print_message(f"[red]- {dep_name}~={lock_1.deps[dep_name].version!s}")
+            for name in removals:
+                self.print_message(f"[red]- {name}~={lock_1[name].version!s}")
 
     def print_changes(self, changes: list[Change], comparison_package: Package, breaking_only: bool = False) -> None:
         changes = [change for change in changes if not breaking_only or change.is_breaking()]

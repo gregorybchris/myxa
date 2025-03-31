@@ -5,30 +5,41 @@ from typing import Iterator, get_args
 from pydantic import BaseModel
 
 from myxa.errors import InternalError
-from myxa.models import (
+from myxa.nodes import (
     Const,
     Enum,
     Field,
     Func,
     MemberNode,
     Mod,
-    Package,
     Param,
     Struct,
     TreeNode,
     Variant,
     VarNode,
 )
+from myxa.package import Package
 
 logger = logging.getLogger(__name__)
 
 Path = list[str]
-Members = dict[str, MemberNode]
+MembersDict = dict[str, MemberNode]
 
 
 class Change(BaseModel):
     def is_breaking(self) -> bool:
-        return isinstance(self, (Removal, VarNodeChange, MemberNodeChange))
+        match self:
+            case Removal():
+                return True
+            case VarNodeChange():
+                return True
+            case MemberNodeChange():
+                return True
+            case Addition():
+                return False
+            case _:
+                msg = f"Unexpected Change type encountered in is_breaking check: {type(self)}"
+                raise InternalError(msg)
 
 
 class Addition(Change):
@@ -61,21 +72,21 @@ class Checker:
 
     def _diff(self, package_old: Package, package_new: Package) -> Iterator[Change]:
         package_name = package_old.info.name
-        package_path = [package_name]
-        yield from self._diff_members(package_old.members, package_new.members, package_path)
+        path = [package_name]
+        yield from self._diff_members(package_old.members.to_dict(), package_new.members.to_dict(), path)
 
-    def _diff_members(self, members_old: Members, members_new: Members, path: Path) -> Iterator[Change]:
-        old_member_names = set(members_old.keys())
-        new_member_names = set(members_new.keys())
+    def _diff_members(self, old_dict: MembersDict, new_dict: MembersDict, path: Path) -> Iterator[Change]:
+        old_member_names = set(old_dict.keys())
+        new_member_names = set(new_dict.keys())
         all_member_names = sorted(old_member_names.union(new_member_names))
         for member_name in all_member_names:
             member_path = [*path, member_name]
             if member_name in old_member_names and member_name in new_member_names:
-                yield from self._diff_member_node(members_old[member_name], members_new[member_name], member_path)
+                yield from self._diff_member_node(old_dict[member_name], new_dict[member_name], member_path)
             elif member_name in old_member_names:
-                yield from self._handle_tree_node_removal(members_old[member_name], member_path)
+                yield from self._handle_tree_node_removal(old_dict[member_name], member_path)
             else:
-                yield from self._handle_tree_node_addition(members_new[member_name], member_path)
+                yield from self._handle_tree_node_addition(new_dict[member_name], member_path)
 
     def _diff_member_node(
         self,

@@ -46,13 +46,13 @@ mx info
 mx info --version <version>
 
 # Add a package dependency
-mx add <dep-name>
+mx add <dependency-name>
 
 # Add a package dependency with a specific version
-mx add <dep-name> --version <version>
+mx add <dependency-name> --version <version>
 
 # Remove a package dependency
-mx remove <dep-name>
+mx remove <dependency-name>
 
 # Lock the package dependencies
 mx lock

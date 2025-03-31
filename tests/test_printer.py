@@ -2,37 +2,30 @@ import re
 from copy import deepcopy
 
 import pytest
-from rich.console import Console
 
 from myxa.checker import Checker
+from myxa.index import Index
 from myxa.manager import Manager
-from myxa.models import (
+from myxa.nodes import (
     Const,
     Dict,
     Enum,
     Field,
     Float,
     Func,
-    Index,
     Int,
     List,
     Maybe,
     Null,
-    Package,
-    PackageLock,
     Param,
     Set,
     Str,
     Struct,
     Variant,
 )
+from myxa.package import Lock, Package
+from myxa.pin import Pin
 from myxa.printer import Printer
-
-
-@pytest.fixture(scope="module", name="printer")
-def printer_fixture() -> Printer:
-    console = Console()
-    return Printer(console=console)
 
 
 def clean_colors(text: str) -> str:
@@ -41,24 +34,29 @@ def clean_colors(text: str) -> str:
 
 
 class TestPrinter:
-    @pytest.mark.parametrize("show_deps", [True, False])
+    @pytest.mark.parametrize("show_dependencies", [True, False])
     @pytest.mark.parametrize("show_lock", [True, False])
-    @pytest.mark.parametrize("show_interface", [True, False])
+    @pytest.mark.parametrize("show_members", [True, False])
     def test_print_package(  # noqa: PLR0913
         self,
         printer: Printer,
         euler_package: Package,
-        show_deps: bool,
+        show_dependencies: bool,
         show_lock: bool,
-        show_interface: bool,
+        show_members: bool,
         capsys: pytest.CaptureFixture,
     ) -> None:
-        euler_package.lock = PackageLock(deps=euler_package.info.deps)
+        pins = []
+        for dependency in euler_package.dependencies.list():
+            pin = Pin(name=dependency.name, version=dependency.version)
+            pins.append(pin)
+        euler_package.lock = Lock.new(pins)
+
         printer.print_package(
             euler_package,
-            show_deps=show_deps,
+            show_dependencies=show_dependencies,
             show_lock=show_lock,
-            show_interface=show_interface,
+            show_members=show_members,
         )
 
         capture_result = capsys.readouterr()
@@ -68,7 +66,7 @@ class TestPrinter:
         assert str(euler_package.info.version) in text_output
         assert euler_package.info.description in text_output
 
-        if show_deps:
+        if show_dependencies:
             assert "Dependencies" in text_output
             assert "[none]" in text_output
         else:
@@ -80,12 +78,12 @@ class TestPrinter:
         else:
             assert "Locked dependencies" not in text_output
 
-        if show_interface:
-            assert "Interface" in text_output
+        if show_members:
+            assert "Members" in text_output
             assert "add(" in text_output
             assert "pi" in text_output
         else:
-            assert "Interface" not in text_output
+            assert "Members" not in text_output
 
     @pytest.mark.parametrize("show_versions", [True, False])
     def test_print_index(  # noqa: PLR0913

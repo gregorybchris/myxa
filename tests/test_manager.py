@@ -2,9 +2,12 @@ import re
 
 import pytest
 
+from myxa.dependency import Dependency
 from myxa.errors import UserError
+from myxa.index import Index
 from myxa.manager import Manager
-from myxa.models import Dep, Index, Package, Version
+from myxa.package import Package
+from myxa.version import Version
 
 
 class TestManager:
@@ -19,7 +22,7 @@ class TestManager:
         package = manager.load_package(package_filepath)
         assert package.info.name == "myxa"
         assert package.info.description == "Compatibility-aware package manager"
-        assert len(package.info.deps) == 0
+        assert len(package.dependencies) == 0
         assert package.lock is None
 
     def test_init_package_twice_raises_user_error(
@@ -42,9 +45,9 @@ class TestManager:
     ) -> None:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index, interactive=False)
-        assert flatty_package.info.name not in interlet_package.info.deps
+        assert not interlet_package.dependencies.has(flatty_package.info.name)
         manager.add(interlet_package, flatty_package.info.name, primary_index)
-        assert flatty_package.info.name in interlet_package.info.deps
+        assert interlet_package.dependencies.has(flatty_package.info.name)
 
     def test_add_dep_twice_raises_user_error(
         self,
@@ -69,9 +72,9 @@ class TestManager:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index, interactive=False)
         manager.add(interlet_package, flatty_package.info.name, primary_index)
-        assert flatty_package.info.name in interlet_package.info.deps
+        assert interlet_package.dependencies.has(flatty_package.info.name)
         manager.remove(interlet_package, flatty_package.info.name)
-        assert flatty_package.info.name not in interlet_package.info.deps
+        assert not interlet_package.dependencies.has(flatty_package.info.name)
 
     def test_remove_missing_dep_raises_user_error(
         self,
@@ -100,7 +103,7 @@ class TestManager:
         interlet_package: Package,
         primary_index: Index,
     ) -> None:
-        interlet_package.info.deps["flatty"] = Dep(name="flatty", version=Version.from_str("2.0"))
+        interlet_package.dependencies.add(Dependency(name="flatty", version=Version.new("2.0")))
         with pytest.raises(UserError, match="Package flatty not found in the provided index: primary"):
             manager.lock(interlet_package, primary_index)
 
@@ -113,9 +116,7 @@ class TestManager:
     ) -> None:
         manager.lock(flatty_package, primary_index)
         manager.publish(flatty_package, primary_index, interactive=False)
-        interlet_package.info.deps[flatty_package.info.name] = Dep(
-            name=flatty_package.info.name, version=Version.from_str("100.0")
-        )
+        interlet_package.dependencies.add(Dependency(name=flatty_package.info.name, version=Version.new("100.0")))
         with pytest.raises(UserError, match="Package flatty==100.0 not found in the provided index: primary"):
             manager.lock(interlet_package, primary_index)
 
@@ -159,7 +160,9 @@ class TestManager:
         manager.update(interlet_package, primary_index)
         new_lock = interlet_package.lock
 
-        assert old_lock.deps[flatty_package.info.name].version != new_lock.deps[flatty_package.info.name].version
+        old_package = old_lock[flatty_package.info.name]
+        new_package = new_lock[flatty_package.info.name]
+        assert old_package.version != new_package.version
 
     def test_check_unchanged_package(
         self,

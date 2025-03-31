@@ -10,8 +10,9 @@ from rich.logging import RichHandler
 from typer import Typer
 
 from myxa.errors import UserError
+from myxa.index import Index
 from myxa.manager import Manager
-from myxa.models import Index, Version
+from myxa.version import Version
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +81,9 @@ def init(
 @app.command(help="Print information about the package")
 def info(  # noqa: PLR0913
     version: Annotated[Optional[str], typer.Option("--version")] = None,
-    show_deps: Annotated[bool, typer.Option("--show-deps/--no-deps")] = True,
+    show_dependencies: Annotated[bool, typer.Option("--show-deps/--no-deps")] = True,
     show_lock: Annotated[bool, typer.Option("--show-lock/--no-lock")] = True,
-    show_interface: Annotated[bool, typer.Option("--show-interface/--no-interface")] = True,
+    show_members: Annotated[bool, typer.Option("--show-members/--no-members")] = True,
     info: Annotated[bool, typer.Option("--info/--no-info")] = False,
     debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
@@ -91,14 +92,14 @@ def info(  # noqa: PLR0913
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
-        version_obj = Version.from_str(version) if version else None
+        version_obj = Version.new(version) if version else None
         manager.info(
             package,
             index,
             version=version_obj,
-            show_deps=show_deps,
+            show_dependencies=show_dependencies,
             show_lock=show_lock,
-            show_interface=show_interface,
+            show_members=show_members,
         )
 
 
@@ -118,7 +119,7 @@ def add(
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
-        version_obj = Version.from_str(version) if version else None
+        version_obj = Version.new(version) if version else None
         manager.add(package, dep_name, index, version=version_obj)
         manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
@@ -190,7 +191,7 @@ def check(
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
-        version_obj = Version.from_str(version) if version else None
+        version_obj = Version.new(version) if version else None
         manager.check(package, index, version=version_obj)
 
 
@@ -205,7 +206,7 @@ def diff(
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         index = load_index(manager)
-        version_obj = Version.from_str(version) if version else None
+        version_obj = Version.new(version) if version else None
         manager.diff(package, index, version=version_obj)
 
 
@@ -233,7 +234,7 @@ def yank(
     info: Annotated[bool, typer.Option("--info/--no-info")] = False,
     debug: Annotated[bool, typer.Option("--debug/--no-debug")] = False,
 ) -> None:
-    version_obj = Version.from_str(version)
+    version_obj = Version.new(version)
     set_logger_config(info, debug)
     manager = Manager()
     manager.printer.print_warning("warning: yank is not a supported Myxa command!")
@@ -269,6 +270,6 @@ def version(
     manager.printer.print_warning("version is not a supported Myxa command!")
     with error_handler(manager, debug=debug):
         package = manager.load_package(DEFAULT_PACKAGE_FILEPATH)
-        version_obj = Version.from_str(version)
+        version_obj = Version.new(version)
         manager.set_version(package, version_obj)
         manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)

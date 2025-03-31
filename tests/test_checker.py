@@ -4,7 +4,8 @@ import pytest
 
 from myxa.checker import Checker, MemberNodeChange, Removal, VarNodeChange
 from myxa.errors import InternalError
-from myxa.models import Const, Float, Func, Int, Package, Param
+from myxa.nodes import Const, Float, Func, Int, Param
+from myxa.package import Package
 
 
 class TestChecker:
@@ -24,7 +25,7 @@ class TestChecker:
         euler_package_new = deepcopy(euler_package)
         euler_package_new.members["math"].members["add"] = Int()
 
-        with pytest.raises(InternalError, match="Invalid MemberNode type <class 'myxa.models.Int'>"):
+        with pytest.raises(InternalError, match="Invalid MemberNode type <class 'myxa.nodes.Int'>"):
             checker.diff(euler_package, euler_package_new)
 
     def test_check_node_type_changed(
@@ -33,10 +34,7 @@ class TestChecker:
         euler_package: Package,
     ) -> None:
         euler_package_new = deepcopy(euler_package)
-        euler_package_new.members["math"].members["add"] = Const(
-            name="add",
-            var_node=Int(),
-        )
+        euler_package_new.members["math"].members["add"] = Const(name="add", var_node=Int())
 
         breaks = checker.diff(euler_package, euler_package_new)
         assert len(breaks) == 1
@@ -51,10 +49,7 @@ class TestChecker:
         euler_package: Package,
     ) -> None:
         euler_package_new = deepcopy(euler_package)
-        euler_package_new.members["math"].members["add"].params["a"] = Param(
-            name="a",
-            var_node=Float(),
-        )
+        euler_package_new.members["math"].members["add"].params["a"] = Param(name="a", var_node=Float())
 
         breaks = checker.diff(euler_package, euler_package_new)
         assert len(breaks) == 1
@@ -92,10 +87,7 @@ class TestChecker:
         euler_package: Package,
     ) -> None:
         euler_package_new = deepcopy(euler_package)
-        euler_package_new.members["math"].members["pi"] = Const(
-            name="pi",
-            var_node=Int(),
-        )
+        euler_package_new.members["math"].members["pi"] = Const(name="pi", var_node=Int())
 
         breaks = checker.diff(euler_package, euler_package_new)
         assert len(breaks) == 1
