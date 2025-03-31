@@ -55,6 +55,11 @@ class Dict(BaseModel):
     val_var_node: VarNode
 
 
+class Tuple(BaseModel):
+    node_type: Literal["tuple"] = "tuple"
+    var_nodes: list[VarNode]
+
+
 class Param(BaseModel):
     node_type: Literal["param"] = "param"
     name: str
@@ -112,7 +117,7 @@ MemberNode = Union[Const, Enum, Func, Mod, Struct]
 TreeNode = Union[Const, Enum, Field, Func, Mod, Param, Struct, Variant]
 
 # Nodes that be passed as a type
-VarNode = Union[Bool, Dict, Enum, Float, Func, Int, List, Maybe, Null, Set, Str, Struct]
+VarNode = Union[Bool, Dict, Enum, Float, Func, Int, List, Maybe, Null, Set, Str, Struct, Tuple]
 
 # All node types
 Node = Union[MemberNode, TreeNode, VarNode]

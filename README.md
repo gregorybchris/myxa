@@ -94,7 +94,6 @@ export MYXA_INDEX="path/to/index.json"
 
 - Upgrade across major versions
 - Type references and recursive types
-- Tuples
 - Optional function parameters
 - Dev dependencies/groups/extras
 - Specifying extra indexes in package metadata

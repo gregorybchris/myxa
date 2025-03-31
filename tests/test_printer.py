@@ -21,6 +21,7 @@ from myxa.nodes import (
     Set,
     Str,
     Struct,
+    Tuple,
     Variant,
 )
 from myxa.package import Lock, Package
@@ -340,3 +341,19 @@ Const[Int]
         capture_result = capsys.readouterr()
         text_output = clean_colors(capture_result.out)
         assert text_output == "Dict[Str, Int]\n"
+
+    def test_get_node_type_str_tuple_int_int_int(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        tuple_int_int_int_node = Tuple(var_nodes=[Int(), Int(), Int()])
+        tuple_int_int_int_node_str = printer.get_node_type_str(tuple_int_int_int_node)
+        printer.print_message(tuple_int_int_int_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Tuple[Int, Int, Int]\n"
+
+    def test_get_node_type_str_tuple_empty(self, printer: Printer, capsys: pytest.CaptureFixture) -> None:
+        tuple_empty_node = Tuple(var_nodes=[])
+        tuple_empty_node_str = printer.get_node_type_str(tuple_empty_node)
+        printer.print_message(tuple_empty_node_str)
+        capture_result = capsys.readouterr()
+        text_output = clean_colors(capture_result.out)
+        assert text_output == "Tuple[]\n"

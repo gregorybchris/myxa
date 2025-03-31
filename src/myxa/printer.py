@@ -33,6 +33,7 @@ from myxa.nodes import (
     Set,
     Str,
     Struct,
+    Tuple,
     Variant,
 )
 from myxa.package import Lock, Package
@@ -299,6 +300,8 @@ class Printer:
                 return "Str"
             case Struct():
                 return "Struct"
+            case Tuple():
+                return "Tuple"
             case Variant():
                 return "Variant"
             case _:
@@ -347,6 +350,10 @@ class Printer:
                 key_var_node_type_str = self.get_node_type_str(key_var_node)
                 val_var_node_type_str = self.get_node_type_str(val_var_node)
                 return f"{g}Dict{b}[{g}{key_var_node_type_str}{b}, {g}{val_var_node_type_str}{b}]"
+            case Tuple(var_nodes=var_nodes):
+                var_node_type_strs = [self.get_node_type_str(var_node) for var_node in var_nodes]
+                var_nodes_str = f"{b}, ".join(var_node_type_strs)
+                return f"{g}Tuple{b}[{g}{var_nodes_str}{b}]"
             case Const(var_node=var_node):
                 var_node_type_str = self.get_node_type_str(var_node)
                 return f"{g}Const{b}[{g}{var_node_type_str}{b}]"
