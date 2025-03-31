@@ -1,6 +1,5 @@
 import pytest
 
-from myxa.dependency import Dependency
 from myxa.errors import UserError
 from myxa.index import Index
 from myxa.manager import Manager
@@ -19,14 +18,10 @@ class TestSolver:
 
     def test_solve_succeeds_with_middle_dependency_compatible(self) -> None:
         index = Index(name="temp")
-        target = Package.new(
-            "app",
-            "1.0",
-            [Dependency.new("euler", "2.0"), Dependency.new("webserver", "0.1")],
-        )
-        index.add(Package.new("webserver", "0.1", [Dependency.new("euler", "1.0")]))
-        index.add(Package.new("webserver", "0.2", [Dependency.new("euler", "2.0")]))
-        index.add(Package.new("webserver", "0.3", [Dependency.new("euler", "3.0")]))
+        target = Package.new("app", "1.0", [("euler", "2.0"), ("webserver", "0.1")])
+        index.add(Package.new("webserver", "0.1", [("euler", "1.0")]))
+        index.add(Package.new("webserver", "0.2", [("euler", "2.0")]))
+        index.add(Package.new("webserver", "0.3", [("euler", "3.0")]))
         index.add(Package.new("euler", "1.0", []))
         index.add(Package.new("euler", "2.0", []))
         index.add(Package.new("euler", "3.0", []))
@@ -36,11 +31,11 @@ class TestSolver:
 
     def test_solve_succeeds_with_highest_minor_versions(self) -> None:
         index = Index(name="temp")
-        target = Package.new("app", "1.2", [Dependency.new("euler", "0.1"), Dependency.new("webserver", "0.2")])
+        target = Package.new("app", "1.2", [("euler", "0.1"), ("webserver", "0.2")])
         index.add(Package.new("euler", "0.1", []))
         index.add(Package.new("euler", "0.2", []))
         index.add(Package.new("euler", "0.3", []))
-        index.add(Package.new("webserver", "0.2", [Dependency.new("euler", "0.2")]))
+        index.add(Package.new("webserver", "0.2", [("euler", "0.2")]))
         solver = Solver(index=index)
         lock = solver.solve(target)
         assert lock == Lock.new([Pin.new("euler", "0.3"), Pin.new("webserver", "0.2")])
@@ -50,11 +45,11 @@ class TestSolver:
         target = Package.new(
             "app",
             "1.2",
-            [Dependency.new("euler", "0.1"), Dependency.new("webserver", "0.2")],
+            [("euler", "0.1"), ("webserver", "0.2")],
         )
         index.add(Package.new("euler", "0.1", []))
         index.add(Package.new("euler", "1.0", []))
-        index.add(Package.new("webserver", "0.2", [Dependency.new("euler", "1.0")]))
+        index.add(Package.new("webserver", "0.2", [("euler", "1.0")]))
         solver = Solver(index=index)
 
         with pytest.raises(UserError, match="Failed to solve package dependencies, no valid configuration found"):
@@ -62,9 +57,9 @@ class TestSolver:
 
     def test_solve_succeeds_on_cycle_with_current_package(self) -> None:
         index = Index(name="temp")
-        target = Package.new("euler", "2.0", [Dependency.new("webserver", "1.0")])
+        target = Package.new("euler", "2.0", [("webserver", "1.0")])
         index.add(Package.new("euler", "1.0", []))
-        index.add(Package.new("webserver", "1.0", [Dependency.new("euler", "1.0")]))
+        index.add(Package.new("webserver", "1.0", [("euler", "1.0")]))
         solver = Solver(index=index)
         lock = solver.solve(target)
         assert lock == Lock.new([Pin.new("webserver", "1.0")])

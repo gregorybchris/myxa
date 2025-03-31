@@ -6,7 +6,7 @@ from typing import Iterator, Optional
 
 from pydantic import BaseModel, Field
 
-from myxa.dependency import Dependency  # noqa: TC001
+from myxa.dependency import Dependency
 from myxa.nodes import MemberNode  # noqa: TC001
 from myxa.pin import Pin
 from myxa.version import Version
@@ -122,10 +122,10 @@ class Package(BaseModel):
     members: Members = Field(default_factory=Members)
 
     @classmethod
-    def new(cls, name: str, version_str: str, dependencies: list[Dependency]) -> Package:
+    def new(cls, name: str, version_str: str, dependencies: list[tuple[str, str]]) -> Package:
         info = Info.new(name=name, version_str=version_str)
-        dependencies_obj = Dependencies.new(dependencies)
-        return cls(info=info, dependencies=dependencies_obj)
+        dependencies_list = [Dependency.new(dep_name, dep_version) for dep_name, dep_version in dependencies]
+        return cls(info=info, dependencies=Dependencies.new(dependencies_list))
 
     def to_pin(self) -> Pin:
         return Pin(name=self.info.name, version=self.info.version)
