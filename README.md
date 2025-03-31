@@ -12,18 +12,15 @@
 
 ## About
 
-Myxa has two goals:
-
-1. Enable package maintainers to safely publish packages without breaks
-2. Enable package users to easily upgrade to the latest versions of packages without breaks
+Myxa enables developers to keep their package dependencies up to date and lowers the risk of unexpected breaking changes.
 
 ### How it works
 
-Along with package dependencies, Myxa also tracks the type signatures of each function in a package. When a breaking change is detected in a type signature, `myxa publish` will require a major version bump.
+Myxa tracks type signatures of everything in a package. When a package maintainer tries to publish a new version of their package, Myxa compares the package changes against previous published versions. When a breaking change is detected, `myxa publish` requires a major version bump.
 
-For large packages, most of the time breaking changes only affect a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade, even across major version boundaries.
+Tracking type signatures also enables Myxa to support safe upgrading across major version boundaries. For large packages, most of the time breaking changes only affect a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade to the latest compatible major version.
 
-> Note: Myxa compatibility checks are compile-time only. Runtime compatibility checks, as you might know, are _quite_ difficult.
+> Note: Myxa compatibility checks do not cover runtime behavior and are therefore imperfect. Package maintainers are still expected to manually bump major versions for runtime compatibility breaks.
 
 ## Installation
 
@@ -93,15 +90,10 @@ Myxa automatically creates a local package index file where published packages a
 export MYXA_INDEX="path/to/index.json"
 ```
 
-## Unsupported features
+## Potentially upcoming features
 
-### Plan to support
-
-- Type references and recursive types
 - Upgrade across major versions
-
-### Want to support
-
+- Type references and recursive types
 - Tuples
 - Optional function parameters
 - Dev dependencies/groups/extras
@@ -111,9 +103,9 @@ export MYXA_INDEX="path/to/index.json"
 - Greater than or equal to constraints
 - Upper bounds
 
-### Will not support
+## Versioning
 
-- Semver patch versions
+Myxa keeps things simple and has only two version slots that represent breaking and non-breaking changes. For ease of communication and at the risk of angering the semver zealots, these are named "major" and "minor" versions.
 
 ## Package name
 
