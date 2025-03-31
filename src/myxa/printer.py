@@ -68,12 +68,14 @@ class Printer:
                 var_node_type_str = self.get_node_type_str(var_node)
                 tree.add(f"[steel_blue1]{name}[bright_black]: {var_node_type_str}")
             case Struct(name=name, fields=fields):
-                struct_tree = tree.add(name, style="steel_blue1")
+                name_str = f"[pale_green3]Struct[bright_black]([steel_blue1]{name}[bright_black])"
+                struct_tree = tree.add(name_str)
                 for field_name, field_node in fields.items():
                     field_node_type_str = self.get_node_type_str(field_node.var_node)
                     struct_tree.add(f"[red]{field_name}[bright_black]: {field_node_type_str}")
             case Enum(name=name, variants=variants):
-                enum_tree = tree.add(name, style="steel_blue1")
+                name_str = f"[pale_green3]Enum[bright_black]([steel_blue1]{name}[bright_black])"
+                enum_tree = tree.add(name_str)
                 for variant_name, variant_node in variants.items():
                     variant_node_type_str = self.get_node_type_str(variant_node.var_node)
                     variant_node_type = variant_node.var_node.node_type
