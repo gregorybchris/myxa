@@ -24,57 +24,55 @@ DEFAULT_PACKAGE_FILEPATH = Path("package.json")
 app = Typer(pretty_exceptions_enable=False)
 
 
-def set_logger_config(info: bool, debug: bool) -> None:
-    handlers = [RichHandler(rich_tracebacks=True)]
-    log_format = "%(message)s"
-
-    if info:
-        logging.basicConfig(level=logging.INFO, handlers=handlers, format=log_format)
-    if debug:
-        logging.basicConfig(level=logging.DEBUG, handlers=handlers, format=log_format)
-
-
-def load_index_path() -> Path:
-    index_filepath_str = os.getenv("MYXA_INDEX")
-    if index_filepath_str is not None:
-        return Path(index_filepath_str)
-
-    temp_dirpath = Path(tempfile.gettempdir())
-    myxa_temp_dir = temp_dirpath / "myxa"
-    myxa_temp_dir.mkdir(exist_ok=True)
-    return myxa_temp_dir / "index.json"
-
-
-def load_index(manager: Manager) -> Index:
-    index_filepath = load_index_path()
-    if not index_filepath.exists():
-        index = Index(name="primary")
-        save_index(manager, index)
-    return manager.load_index(index_filepath)
-
-
-def save_index(manager: Manager, index: Index) -> None:
-    index_filepath = load_index_path()
-    manager.save_index(index, index_filepath)
-
-
 @dataclass(kw_only=True)
 class CliContext:
-    index: Index
     manager: Manager
+    index: Index
 
     @classmethod
     @contextmanager
     def context(cls, info: bool = False, debug: bool = False) -> Generator[CliContext, None, None]:
-        set_logger_config(info, debug)
+        cls.set_logger_config(info, debug)
         manager = Manager()
-        index = load_index(manager)
+        index = cls.load_index(manager)
         try:
-            yield CliContext(index=index, manager=manager)
+            yield cls(manager=manager, index=index)
         except UserError as exc:
             manager.printer.print_error(str(exc))
             if debug:
                 raise exc
+
+    @staticmethod
+    def set_logger_config(info: bool, debug: bool) -> None:
+        handlers = [RichHandler(rich_tracebacks=True)]
+        log_format = "%(message)s"
+
+        if info:
+            logging.basicConfig(level=logging.INFO, handlers=handlers, format=log_format)
+        if debug:
+            logging.basicConfig(level=logging.DEBUG, handlers=handlers, format=log_format)
+
+    @classmethod
+    def load_index_path(cls) -> Path:
+        index_filepath_str = os.getenv("MYXA_INDEX")
+        if index_filepath_str is not None:
+            return Path(index_filepath_str)
+
+        temp_dirpath = Path(tempfile.gettempdir())
+        myxa_temp_dir = temp_dirpath / "myxa"
+        myxa_temp_dir.mkdir(exist_ok=True)
+        return myxa_temp_dir / "index.json"
+
+    @classmethod
+    def load_index(cls, manager: Manager) -> Index:
+        index_filepath = cls.load_index_path()
+        if not index_filepath.exists():
+            return Index(name="primary")
+        return manager.load_index(index_filepath)
+
+    def save_index(self) -> None:
+        index_filepath = self.load_index_path()
+        self.manager.save_index(self.index, index_filepath)
 
 
 @app.command(help="Initialize a new package")
@@ -208,7 +206,7 @@ def publish(
     with CliContext.context(info=info, debug=debug) as context:
         package = context.manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         context.manager.publish(package, context.index, interactive=interactive, major=major)
-        save_index(context.manager, context.index)
+        context.save_index()
         context.manager.save_package(package, DEFAULT_PACKAGE_FILEPATH)
 
 
@@ -224,7 +222,7 @@ def yank(
         package = context.manager.load_package(DEFAULT_PACKAGE_FILEPATH)
         version = Version.new(version_str)
         context.manager.yank(package, version, context.index, interactive=interactive)
-        save_index(context.manager, context.index)
+        context.save_index()
 
 
 @app.command(help="List all packages in the index")
