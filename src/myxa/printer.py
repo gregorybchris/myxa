@@ -148,7 +148,10 @@ class Printer:
                     version_color = "[green]" if is_latest_major else "[sandy_brown]"
                 else:
                     version_color = "[white]"
-                lock_tree.add(f"[steel_blue1]{pin.name}[bright_black]=={version_color}{pin.version!s}")
+                source = package.lock.sources[pin.name]
+                dep_str = f"[steel_blue1]{pin.name}[bright_black]=={version_color}{pin.version!s}"
+                source_str = f"[bright_black]([white]{source}[bright_black])"
+                lock_tree.add(f"{dep_str} {source_str}")
             if len(package.lock) == 0:
                 lock_tree.add("\\[none]", style="steel_blue1")
             group_renderables = (*group_renderables, padding, lock_tree)
