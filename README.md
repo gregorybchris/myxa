@@ -14,14 +14,6 @@
 
 Myxa enables developers to keep their package dependencies up to date and lowers the risk of unexpected breaking changes.
 
-### How it works
-
-Myxa tracks type signatures for everything in a package. When a package maintainer tries to publish a new version of their package, Myxa compares the package against previous published versions. When a breaking change is detected, `myxa publish` requires a major version bump.
-
-Tracking type signatures also enables Myxa to support safe upgrading across major version boundaries. For large packages, most of the time breaking changes only affect a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade to the latest compatible major version.
-
-> Note: Myxa compatibility checks do not cover runtime behavior and are therefore imperfect. Package maintainers are still expected to manually bump major versions for runtime compatibility breaks.
-
 ## Sample
 
 Running `mx info` shows an overview of a package. In this sample, the current package (euler) has taken a dependency on the interlet and jeans packages. The package flatty was pulled in as a dependency of interlet. Yellow version numbers indicate packages with newer major versions available in the index.
@@ -31,6 +23,14 @@ Running `mx info` shows an overview of a package. In this sample, the current pa
 </div>
 
 Modules are in purple, types are in yellow, and package member names are in light blue and red. Primitive types like `Int`, `Str`, and `Float` are available as builtins. `Dict`, `Set`, `List`, and `Tuple` collection types are supported as well as `Struct` and `Enum`.
+
+### How it works
+
+Myxa tracks type signatures for everything in a package. When a package maintainer tries to publish a new version of their package, Myxa compares the package against previous published versions. When a breaking change is detected, `myxa publish` requires a major version bump.
+
+Tracking type signatures also enables Myxa to support safe upgrading across major version boundaries. For large packages, most of the time breaking changes only affect a small proportion of users. If a user depends on feature X in their project, but only feature Y breaks, then `myxa update` will safely auto-upgrade to the latest compatible major version.
+
+> Note: Myxa compatibility checks do not cover runtime behavior and are therefore imperfect. Package maintainers are still expected to manually bump major versions for runtime compatibility breaks.
 
 ## Installation
 
