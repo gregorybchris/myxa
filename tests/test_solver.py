@@ -27,7 +27,19 @@ class TestSolver:
         index.add(Package.new("euler", "3.0", []))
         solver = Solver(index=index)
         lock = solver.solve(target)
-        assert lock == Lock.new([Pin.new("euler", "2.0"), Pin.new("webserver", "0.2")])
+        assert lock == Lock.new(
+            [
+                Pin.new("euler", "2.0"),
+                Pin.new("webserver", "0.2"),
+            ],
+            children={
+                "app": ["euler", "webserver"],
+            },
+            sources={
+                "euler": "temp",
+                "webserver": "temp",
+            },
+        )
 
     def test_solve_succeeds_with_highest_minor_versions(self) -> None:
         index = Index(name="temp")
@@ -38,7 +50,19 @@ class TestSolver:
         index.add(Package.new("webserver", "0.2", [("euler", "0.2")]))
         solver = Solver(index=index)
         lock = solver.solve(target)
-        assert lock == Lock.new([Pin.new("euler", "0.3"), Pin.new("webserver", "0.2")])
+        assert lock == Lock.new(
+            [
+                Pin.new("euler", "0.3"),
+                Pin.new("webserver", "0.2"),
+            ],
+            children={
+                "app": ["euler", "webserver"],
+            },
+            sources={
+                "webserver": "temp",
+                "euler": "temp",
+            },
+        )
 
     def test_solve_fails_on_dependency_conflict(self) -> None:
         index = Index(name="temp")
@@ -62,7 +86,19 @@ class TestSolver:
         index.add(Package.new("webserver", "1.0", [("euler", "1.0")]))
         solver = Solver(index=index)
         lock = solver.solve(target)
-        assert lock == Lock.new([Pin.new("webserver", "1.0")])
+        assert lock == Lock.new(
+            [
+                Pin.new("webserver", "1.0"),
+            ],
+            children={
+                "webserver": ["euler"],
+                "euler": ["webserver"],
+            },
+            sources={
+                "webserver": "temp",
+                "euler": "temp",
+            },
+        )
 
     def test_ecosystem(  # noqa: PLR0913
         self,

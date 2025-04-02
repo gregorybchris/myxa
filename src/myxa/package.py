@@ -61,9 +61,14 @@ class Lock(BaseModel):
     sources: dict[str, str] = Field(default_factory=dict)
 
     @classmethod
-    def new(cls, pins: list[Pin]) -> Lock:
+    def new(
+        cls,
+        pins: list[Pin],
+        children: Optional[dict[str, list[str]]] = None,
+        sources: Optional[dict[str, str]] = None,
+    ) -> Lock:
         pins_dict = {pin.name: pin for pin in pins}
-        return cls(pins=pins_dict)
+        return cls(pins=pins_dict, children=children or {}, sources=sources or {})
 
     def has(self, name: str) -> bool:
         return name in self.pins
