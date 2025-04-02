@@ -57,7 +57,7 @@ class Dependencies(BaseModel):
 
 class Lock(BaseModel):
     pins: dict[str, Pin] = Field(default_factory=dict)
-    parents: dict[str, str] = Field(default_factory=dict)
+    children: dict[str, list[str]] = Field(default_factory=dict)
     sources: dict[str, str] = Field(default_factory=dict)
 
     @classmethod
@@ -80,8 +80,10 @@ class Lock(BaseModel):
     def add(self, pin: Pin) -> None:
         self.pins[pin.name] = pin
 
-    def add_parent(self, name: str, parent_name: str) -> None:
-        self.parents[name] = parent_name
+    def add_child(self, parent_name: str, name: str) -> None:
+        if parent_name not in self.children:
+            self.children[parent_name] = []
+        self.children[parent_name].append(name)
 
     def add_source(self, name: str, source_name: str) -> None:
         self.sources[name] = source_name
@@ -92,7 +94,7 @@ class Lock(BaseModel):
     def clone_add(self, pin: Pin, *, parent_name: str, source_name: str) -> Lock:
         new_lock = deepcopy(self)
         new_lock.add(pin)
-        new_lock.add_parent(pin.name, parent_name)
+        new_lock.add_child(parent_name, pin.name)
         new_lock.add_source(pin.name, source_name)
         return new_lock
 
